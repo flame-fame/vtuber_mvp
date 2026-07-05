@@ -33,7 +33,7 @@ class VTSConnection:
             wst = threading.Thread(target=self.ws.run_forever, daemon=True)
             wst.start()
             # 等待连接建立
-            time.sleep(1)
+            time.sleep(10)
             return True
         except Exception as e:
             print(f"❌ 连接失败: {e}")
@@ -207,22 +207,8 @@ def main():
     time.sleep(6)  # 给用户留出点击"允许"的时间
 
     if vts.authenticated:
-        print("\n🎮 开始演示控制！")
         
-        # 演示1: 让模型张嘴 (MouthOpen 是常用参数)
-        print("👄 张嘴 (参数值 0.8)...")
-        vts.set_parameter("MouthOpen", 0.8)
-        time.sleep(1.5)
-        
-        print("👄 闭嘴 (参数值 0.0)...")
-        vts.set_parameter("MouthOpen", 0.0)
-        time.sleep(0.5)
-        
-        # 演示2: 尝试触发一个名为 "Happy" 的热键（如果你配置了的话）
-        # print("😊 尝试触发 'Happy' 热键...")
-        # vts.trigger_hotkey("Happy")
-        
-        print("\n✅ MVP演示结束。你可以继续在控制台输入命令。")
+        print("你可以继续在控制台输入命令。")
         print("输入 'param <name> <value>' 控制参数")
         print("输入 'hotkey <id>' 触发热键")
         print("输入 'quit' 退出程序")
