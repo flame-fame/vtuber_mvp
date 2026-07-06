@@ -2,14 +2,18 @@ import websocket
 import json
 import time
 import threading
+import os
+
 # 用于生成唯一的请求ID
 import uuid
 
 # ================= 配置区 =================
 VTS_WS_URL = "ws://localhost:8001"  # 默认WebSocket端口
-PLUGIN_NAME = "MyAIVTuber"       # 插件名称
-PLUGIN_DEVELOPER = "LXL"       # 开发者名称
+PLUGIN_NAME = "MyAIVTuber"  # 插件名称
+PLUGIN_DEVELOPER = "LXL"  # 开发者名称
+TOKEN_FILE = "vts_token.txt"  # 认证令牌文件名
 # =========================================
+
 
 class VTSConnection:
     def __init__(self):
@@ -24,11 +28,13 @@ class VTSConnection:
         print(f"⏳ 正在连接到 VTube Studio ({VTS_WS_URL})...")
         try:
             # 启用trace可查看详细日志，此处关闭
-            self.ws = websocket.WebSocketApp(VTS_WS_URL,
-                                             on_open=self.on_open,
-                                             on_message=self.on_message,
-                                             on_error=self.on_error,
-                                             on_close=self.on_close)
+            self.ws = websocket.WebSocketApp(
+                VTS_WS_URL,
+                on_open=self.on_open,
+                on_message=self.on_message,
+                on_error=self.on_error,
+                on_close=self.on_close,
+            )
             # 在另一个线程中运行，避免阻塞主程序
             wst = threading.Thread(target=self.ws.run_forever, daemon=True)
             wst.start()
@@ -58,9 +64,16 @@ class VTSConnection:
                     print("ℹ️ 当前会话已认证")
                     self.authenticated = True
                 else:
-                    print("🔑 当前会话未认证，开始认证流程...")
-                    # 第一步：请求认证令牌
-                    self.request_auth_token()
+                    print("🔑 当前会话未认证，尝试使用本地 Token...")
+                    # ✅ 先尝试读取本地保存的 token
+                    saved_token = self.load_token()
+                    if saved_token:
+                        self.token = saved_token
+                        print(f"📂 找到本地 Token: {saved_token[:8]}...，直接尝试认证")
+                        self.authenticate_session()
+                    else:
+                        print("❌ 本地 Token 不存在或为空，开始完整认证流程...")
+                        self.request_auth_token()
 
             # 处理认证令牌响应
             elif msg_type == "AuthenticationTokenResponse":
@@ -78,11 +91,19 @@ class VTSConnection:
                 auth_data = data.get("data", {})
                 if auth_data.get("authenticated"):
                     self.authenticated = True
+                    # ✅ 认证成功后保存 token
+                    if self.token:
+                        self.save_token(self.token)
                     print("🎉 会话认证成功！可以开始控制模型了。")
                     # 认证成功后，可以执行初始化操作，例如获取当前模型信息
                     self.send_request("CurrentModelRequest", {})
                 else:
                     print(f"❌ 会话认证失败: {auth_data.get('reason')}")
+                    # 清除失效的本地 token
+                    if os.path.exists(TOKEN_FILE):
+                        os.remove(TOKEN_FILE)
+                    # 回退到完整认证流程（弹窗）
+                    self.request_auth_token()
 
             # 处理当前模型信息响应
             elif msg_type == "CurrentModelResponse":
@@ -97,7 +118,9 @@ class VTSConnection:
             # 处理通用错误响应
             elif msg_type == "APIError":
                 error_data = data.get("data", {})
-                print(f"❌ API错误 [{error_data.get('errorID')}]: {error_data.get('message')}")
+                print(
+                    f"❌ API错误 [{error_data.get('errorID')}]: {error_data.get('message')}"
+                )
 
             # 将响应存储，供send_request方法使用（如果需要同步等待）
             if request_id and request_id in self.response_store:
@@ -129,7 +152,7 @@ class VTSConnection:
             "apiVersion": "1.0",
             "requestID": request_id,
             "messageType": msg_type,
-            "data": data_payload
+            "data": data_payload,
         }
         try:
             self.ws.send(json.dumps(request))
@@ -142,11 +165,14 @@ class VTSConnection:
     def request_auth_token(self):
         """请求认证令牌（会触发VTS弹窗）"""
         print("⏳ 正在请求认证令牌，请在VTube Studio中允许插件访问...")
-        self.send_request("AuthenticationTokenRequest", {
-            "pluginName": PLUGIN_NAME,
-            "pluginDeveloper": PLUGIN_DEVELOPER
-            # 可选: "pluginIcon": "base64_encoded_128x128_png"
-        })
+        self.send_request(
+            "AuthenticationTokenRequest",
+            {
+                "pluginName": PLUGIN_NAME,
+                "pluginDeveloper": PLUGIN_DEVELOPER,
+                # 可选: "pluginIcon": "base64_encoded_128x128_png"
+            },
+        )
 
     def authenticate_session(self):
         """使用令牌认证当前会话"""
@@ -154,11 +180,30 @@ class VTSConnection:
             print("❌ 没有可用的令牌，请先请求令牌")
             return
         print("⏳ 正在进行会话认证...")
-        self.send_request("AuthenticationRequest", {
-            "pluginName": PLUGIN_NAME,
-            "pluginDeveloper": PLUGIN_DEVELOPER,
-            "authenticationToken": self.token
-        })
+        self.send_request(
+            "AuthenticationRequest",
+            {
+                "pluginName": PLUGIN_NAME,
+                "pluginDeveloper": PLUGIN_DEVELOPER,
+                "authenticationToken": self.token,
+            },
+        )
+
+    # ============== 认证令牌管理方法 ==============
+    def save_token(self, token):
+        """将 token 保存到本地文件"""
+        with open(TOKEN_FILE, "w") as f:
+            f.write(token)
+        print(f"💾 Token 已保存到 {TOKEN_FILE}")
+
+    def load_token(self):
+        """从本地文件读取 token"""
+        if os.path.exists(TOKEN_FILE):
+            with open(TOKEN_FILE, "r") as f:
+                token = f.read().strip()
+                if token:
+                    return token
+        return None
 
     # ============== 核心控制方法 ==============
     def set_parameter(self, param_id, value):
@@ -168,35 +213,32 @@ class VTSConnection:
             return
         # 注意：这里使用的是"InjectParameterDataRequest"
         # 它用于覆盖面部追踪等输入参数
-        self.send_request("InjectParameterDataRequest", {
-            "faceFound": True,  # 告诉VTS"面部已找到"，避免触发丢失动画
-            "parameterValues": [
-                {
-                    "id": param_id,
-                    "value": value
-                }
-            ]
-        })
+        self.send_request(
+            "InjectParameterDataRequest",
+            {
+                "faceFound": True,  # 告诉VTS"面部已找到"，避免触发丢失动画
+                "parameterValues": [{"id": param_id, "value": value}],
+            },
+        )
 
     def trigger_hotkey(self, hotkey_id):
         """触发一个已配置的热键"""
         if not self.authenticated:
             print("❌ 未认证，无法触发热键")
             return
-        self.send_request("HotkeyTriggerRequest", {
-            "hotkeyID": hotkey_id
-        })
+        self.send_request("HotkeyTriggerRequest", {"hotkeyID": hotkey_id})
 
     def get_model_info(self):
         """获取当前加载的模型信息"""
         return self.send_request("CurrentModelRequest", {})
 
+
 # ================= 主程序入口 =================
 def main():
-    print("="*50)
+    print("=" * 50)
     print("🚀 VTube Studio MVP 控制器")
-    print("="*50)
-    
+    print("=" * 50)
+
     vts = VTSConnection()
     if not vts.connect():
         print("💡 请确保VTube Studio已启动，并且API端口设置为8001")
@@ -208,25 +250,25 @@ def main():
 
     if vts.authenticated:
         print("\n🎮 开始演示控制！")
-        
+
         # 演示1: 让模型张嘴 (MouthOpen 是常用参数)
         print("👄 张嘴 (参数值 0.8)...")
         vts.set_parameter("MouthOpen", 0.8)
         time.sleep(1.5)
-        
+
         print("👄 闭嘴 (参数值 0.0)...")
         vts.set_parameter("MouthOpen", 0.0)
         time.sleep(0.5)
-        
+
         # 演示2: 尝试触发一个名为 "Happy" 的热键（如果你配置了的话）
         # print("😊 尝试触发 'Happy' 热键...")
         # vts.trigger_hotkey("Happy")
-        
+
         print("\n✅ MVP演示结束。你可以继续在控制台输入命令。")
         print("输入 'param <name> <value>' 控制参数")
         print("输入 'hotkey <id>' 触发热键")
         print("输入 'quit' 退出程序")
-        
+
         # 简单的交互循环
         while True:
             try:
@@ -249,6 +291,7 @@ def main():
         print("❌ 认证失败，请检查VTS设置并重新运行。")
 
     print("👋 退出程序")
+
 
 if __name__ == "__main__":
     main()
