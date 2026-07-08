@@ -55,12 +55,13 @@ class VTubeDriver:
     def set_emotion(self, emotion):
         if not self.connected:
             return
+        # 更新情绪参数映射，左右眼分别控制EyeOpenLeft和EyeOpenRight
         emotion_params = {
-            "happy": {"EyeOpen": 1.0, "MouthForm": 0.8, "EyebrowY": -0.5},
-            "angry": {"EyeOpen": 0.7, "MouthForm": -0.6, "EyebrowY": 0.8, "EyebrowAngle": 0.7},
-            "sad": {"EyeOpen": 0.5, "MouthForm": -0.3, "EyebrowY": 0.5},
-            "surprised": {"EyeOpen": 1.2, "MouthOpen": 0.9, "EyebrowY": -0.8},
-            "neutral": {"EyeOpen": 0.8, "MouthOpen": 0.0, "MouthForm": 0.0, "EyebrowY": 0.0}
+            "happy": {"EyeOpenLeft": 1.0, "EyeOpenRight": 1.0, "MouthForm": 0.8, "BrowHeightLeft": -0.5, "BrowHeightRight": -0.5},
+            "angry": {"EyeOpenLeft": 0.7, "EyeOpenRight": 0.7, "MouthForm": -0.6, "BrowHeightLeft": 0.8, "BrowHeightRight": 0.8, "EyebrowAngleRight": 0.7},
+            "sad": {"EyeOpenLeft": 0.5, "EyeOpenRight": 0.5, "MouthForm": -0.3, "BrowHeightLeft": 0.5, "BrowHeightRight": 0.5},
+            "surprised": {"EyeOpenLeft": 1.2, "EyeOpenRight": 1.2, "MouthOpen": 0.9, "BrowHeightLeft": -0.8, "BrowHeightRight": -0.8},
+            "neutral": {"EyeOpenLeft": 0.8, "EyeOpenRight": 0.8, "MouthOpen": 0.0, "MouthForm": 0.0, "BrowHeightLeft": 0.0, "BrowHeightRight": 0.0}
         }
         params = emotion_params.get(emotion, emotion_params["neutral"])
         param_values = [{"id": k, "value": v} for k, v in params.items()]

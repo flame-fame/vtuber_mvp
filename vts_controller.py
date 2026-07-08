@@ -215,7 +215,7 @@ class VTSController:
         设置多个Live2D参数
         
         Args:
-            parameters: 参数字典，如 {"MouthOpen": 0.5, "EyeOpen": 0.8}
+            parameters: 参数字典，如 {"MouthOpen": 0.5, "EyeOpenLeft": 0.8, "EyeOpenRight": 0.8}
             face_found: 是否告诉VTS"面部已找到"
         """
         if not self.authenticated:
