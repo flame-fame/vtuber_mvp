@@ -39,7 +39,7 @@ class VTSConnection:
             wst = threading.Thread(target=self.ws.run_forever, daemon=True)
             wst.start()
             # 等待连接建立
-            time.sleep(1)
+            time.sleep(10)
             return True
         except Exception as e:
             print(f"❌ 连接失败: {e}")
