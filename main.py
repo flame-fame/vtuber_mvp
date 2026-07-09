@@ -4,6 +4,7 @@ from config import *
 from vts_controller import VTSController
 from ai_brain import AIBrain
 from tts import TTSEngine
+from action_scheduler import ActionScheduler
 
 class AIVTuber:
     """AI主播主程序"""
@@ -11,12 +12,12 @@ class AIVTuber:
     def __init__(self):
         # 初始化各模块
         self.vts = VTSController(VTS_CONFIG)
+        self.action_scheduler = ActionScheduler(self.vts)
+        self.action_scheduler.on_action_start = self._on_action_start
+        self.action_scheduler.on_action_end = self._on_action_end
         self.brain = AIBrain(AI_CONFIG)
         self.tts = TTSEngine()
-        
-        # 表情映射
-        self.emotion_map = EMOTION_TO_VTS
-        
+    
         # 运行状态
         self.running = True
         
@@ -72,7 +73,7 @@ class AIVTuber:
                 
                 # 驱动VTS皮套
                 if self.vts.authenticated:
-                    self._drive_vts(emotion)
+                    self._drive_vts(emotion, intensity=1.0)
                 
                 # TTS语音
                 if ai_text:
@@ -88,15 +89,15 @@ class AIVTuber:
         # 清理资源
         self._cleanup()
     
-    def _drive_vts(self, emotion: str):
+    def _drive_vts(self, emotion: str, intensity: float = 1.0):
         """根据情绪驱动VTS"""
-        params = self.emotion_map.get(emotion, self.emotion_map["平静"])
-        self.vts.set_parameters(params)
+        self.action_scheduler.add_emotion_action(emotion, intensity=intensity)
     
     def _reset_model(self):
         """重置VTS模型"""
         if self.vts.authenticated:
-            self.vts.set_parameters(self.emotion_map["平静"])
+            idle_action=self.action_scheduler.create_hotkey_action("Idle", priority=ActionPriority.HIGH)
+            self.action_scheduler.add_action(idle_action, immediate=True)
             print("✅ VTS模型已重置")
         else:
             print("❌ VTS未认证，无法重置")
@@ -104,11 +105,20 @@ class AIVTuber:
     def _cleanup(self):
         """清理资源"""
         print("🧹 正在清理资源...")
+        self.action_scheduler.stop()
         if self.vts.authenticated:
             # 重置模型到平静状态
-            self.vts.set_parameters(self.emotion_map["平静"])
+            idle_action=self.action_scheduler.create_hotkey_action("Idle", priority=ActionPriority.HIGH)
+            self.action_scheduler.add_action(idle_action, immediate=True)      
         self.vts.close()
         print("👋 程序已退出")
+
+    def _on_action_start(self, action):
+        print(f"🎯 皮套动作: {action.action_id}")
+    
+    def _on_action_end(self, action):
+        pass  # 或记录日志
+    
 
 # ================= 程序入口 =================
 if __name__ == "__main__":

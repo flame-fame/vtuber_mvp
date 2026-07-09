@@ -210,24 +210,34 @@ class VTSController:
     
     # ========== 公开API方法 ==========
     
-    def set_parameters(self, parameters: Dict[str, float], face_found: bool = True):
+    def set_parameters(self, parameters: Dict[str, float], face_found: bool = True, fade_time: float | None = None):
         """
-        设置多个Live2D参数
-        
+        设置多个Live2D参数，支持平滑淡出/渐变
         Args:
-            parameters: 参数字典，如 {"MouthOpen": 0.5, "EyeOpenLeft": 0.8, "EyeOpenRight": 0.8}
-            face_found: 是否告诉VTS"面部已找到"
+                parameters: 参数字典，如 {"MouthOpen": 0.5, "EyeOpenLeft": 0.8, "EyeOpenRight": 0.8}
+                face_found: 是否告诉VTS"面部已找到"
+                fade_time: 渐变过渡时长(秒)，None/0=瞬间切换，大于0平滑插值
         """
         if not self.authenticated:
             print("❌ 未认证，无法控制参数")
             return
-            
+
+        # 参数校验：淡出时间不能为负数
+        if fade_time is not None and fade_time < 0:
+            print("⚠️ fade_time 不能为负数，已自动置0")
+            fade_time = 0.0
+
         param_list = [{"id": k, "value": v} for k, v in parameters.items()]
-        
-        self._send_request("InjectParameterDataRequest", {
+
+        req_body = {
             "faceFound": face_found,
             "parameterValues": param_list
-        })
+        }
+        # 仅当传入有效淡出时间时，追加fadeTime字段
+        if fade_time is not None and fade_time > 0:
+            req_body["fadeTime"] = fade_time
+
+        self._send_request("InjectParameterDataRequest", req_body)
     
     def set_parameter(self, param_id: str, value: float):
         """设置单个参数"""

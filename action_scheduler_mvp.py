@@ -478,3 +478,55 @@ class ActionScheduler:
             cooldown=1.0,
             interruptible=True
         )
+
+
+# ==================== 使用示例 ====================
+
+if __name__ == "__main__":
+    # 创建控制器
+    vts = VTSController(VTS_CONFIG)
+    vts.connect()
+    
+    # 创建调度器
+    scheduler = ActionScheduler(vts, idle_config={"MouthOpen": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7})
+    
+    # 设置回调
+    def on_action_start(action):
+        print(f"▶️ 动作开始: {action.action_id}")
+    
+    def on_action_end(action):
+        print(f"⏹️ 动作结束: {action.action_id}")
+    
+    scheduler.on_action_start = on_action_start
+    scheduler.on_action_end = on_action_end
+    
+    # 启动调度器
+    scheduler.start()
+    
+    # 添加示例动作
+    # 1. 开心表情
+    happy_action = scheduler.create_expression_action("Smile.exp3.json", duration=3.0)
+    scheduler.add_action(happy_action)
+    
+    # 2. 参数调整
+    param_action = scheduler.create_parameter_action(
+        {"MouthOpen": 0.5, "EyeOpenLeft": 0.9, "EyeOpenRight": 0.9},
+        duration=2.0
+    )
+    scheduler.add_action(param_action)
+    
+    # 3. 热键触发
+    hotkey_action = scheduler.create_hotkey_action("My Animation 2")
+    scheduler.add_action(hotkey_action, immediate=True)  # 立即执行
+    
+    # 4. 使用情绪便捷方法
+    scheduler.add_emotion_action("开心", intensity=0)
+    
+    hotkey_action = scheduler.create_hotkey_action("My Animation 2")
+    scheduler.add_action(hotkey_action, immediate=True)  # 立即执行
+    # 运行一段时间
+    time.sleep(10)
+    
+    # 清理
+    scheduler.stop()
+    vts.close()

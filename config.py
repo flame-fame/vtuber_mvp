@@ -1,4 +1,22 @@
 # ==================== 配置文件 ====================
+# 动作优先级\动作类型
+from enum import Enum
+class ActionPriority(Enum):
+    """动作优先级（数值越高优先级越高）"""
+    BACKGROUND = 0      # 背景级：空闲状态
+    LOW = 1             # 低：默认表情
+    NORMAL = 2          # 普通：情绪表达
+    HIGH = 3            # 高：重要反应
+    CRITICAL = 4        # 关键：打断当前所有动作
+
+class ActionType(Enum):
+    """动作类型"""
+    EXPRESSION = "expression"      # 表情文件
+    ANIMATION = "animation"        # 动作文件
+    PARAMETER = "parameter"        # 参数调整
+    HOTKEY = "hotkey"              # 热键
+    MOVE = "move"                  # 模型移动
+    COMPOSITE = "composite"        # 复合动作
 
 # VTube Studio 配置
 VTS_CONFIG = {
@@ -23,16 +41,65 @@ AI_CONFIG = {
     "max_tokens": 100
 }
 
-# 参数映射：AI情绪 -> VTS参数
-EMOTION_TO_VTS = {
-    "开心": {"MouthSmile": 1, "EyeSmileLeft": 1, "EyeSmileRight": 1, "BrowFormLeft": 1, "BrowFormRight": 1,},
-    "生气": {"MouthSmile": 0.0, "EyeSmileLeft": 0, "EyeSmileRight": 0, "BrowFormLeft": 0.8, "BrowFormRight": 0.8, "FaceAngleY": -10.0},
-    "难过": {"MouthSmile": -1, "EyeSmileLeft": 0, "EyeSmileRight": 0, "BrowFormLeft": -0.8, "BrowFormRight": -0.8, "FaceAngleX": -5.0},
-    "惊讶": {"MouthOpen": 0.9, "EyeOpenLeft": 1.0, "EyeOpenRight": 1.0, "FaceAngleY": 0.0},
-    "害羞": {"MouthSmile": 0.3, "EyeOpenLeft": 0.5, "EyeOpenRight": 0.5, "FaceAngleX": 0.0, "FaceAngleY": 0.0},
-    "思考": {"MouthSmile": 0.3, "EyeOpenLeft": 0.5, "EyeOpenRight": 0.5, "FaceAngleX": 0.0, "FaceAngleY": 0.0},
-    "平静": {"MouthSmile": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7, "FaceAngleX": 0.0, "FaceAngleY": 0.0}
+# 情绪静态基础配置：只存固定文件名、基础参数、系数、时长、优先级
+EMOTION_BASE_CONFIG = {
+    "开心": {
+        "expression_file": "Smile.exp3.json",
+        "base_params": {
+            "MouthOpen_base": 0.3,
+            "MouthOpen_coeff": 0.3,
+            "EyeOpenLeft_base": 0.7,
+            "EyeOpenLeft_coeff": 0.3,
+            "EyeOpenRight_base": 0.7,
+            "EyeOpenRight_coeff": 0.3,
+        },
+        "duration": 2.0,
+        "priority": ActionPriority.NORMAL
+    },
+    "生气": {
+        "expression_file": "Angry.exp3.json",
+        "base_params": {
+            "MouthOpen": 0.2,
+            "EyeOpenLeft": 0.4,
+            "EyeOpenRight": 0.4,
+            "FaceAngleY_base": 0,
+            "FaceAngleY_coeff": -5
+        },
+        "duration": 1.5,
+        "priority": ActionPriority.NORMAL
+    },
+    "惊讶": {
+        "expression_file": "Surprised.exp3.json",
+        "base_params": {
+            "MouthOpen_base": 0.7,
+            "MouthOpen_coeff": 0.3,
+            "EyeOpenLeft": 0.9,
+            "EyeOpenRight": 0.9
+        },
+        "duration": 1.0,
+        "priority": ActionPriority.HIGH
+    },
+    "难过": {
+        "expression_file": "Sad.exp3.json",
+        "base_params": {
+            "MouthOpen": 0.1,
+            "EyeOpenLeft": 0.3,
+            "EyeOpenRight": 0.3,
+            "FaceAngleX_base": 0,
+            "FaceAngleX_coeff": -3
+        },
+        "duration": 2.0,
+        "priority": ActionPriority.NORMAL
+    },
+    "平静": {
+        "expression_file": None,
+        "base_params": {
+            "MouthOpen": 0.0,
+            "EyeOpenLeft": 0.7,
+            "EyeOpenRight": 0.7
+        },
+        "duration": 1.0,
+        "priority": ActionPriority.BACKGROUND
+    }
 }
-
-
 
