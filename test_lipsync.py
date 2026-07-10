@@ -18,6 +18,7 @@ class AIVTuber:
         )
         self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"])
         self.vts = VTSController()
+        self.thread = None
 
         # 2. 连接 VTS
         if not self.vts.connect():
@@ -30,31 +31,27 @@ class AIVTuber:
 
         print("✅ AI 主播初始化完成！准备就绪。")
 
-    def _play_audio_and_mouth(self, text):
-        """
-        播放语音
-        """
+    def _play_audio(self, text):
         # 由于原 tts.py 的 speak 方法是同步阻塞的，我们需要在子线程运行它
         def audio_task():
             self.tts.speak(text)
-            self.is_speaking = False
-
-        self.is_speaking = True
-        t_audio = threading.Thread(target=audio_task)
-        t_audio.start()
-
-        # 说完话闭嘴
-        self.vts.set_parameter("MouthOpen", 0.0)
+    
+        self.thread = threading.Thread(target=audio_task)
+        self.thread.start()
 
     def run(self):
         """主循环"""
         print("\n--- 输入文字开始对话 (输入 'exit' 退出, 'clear' 清空记忆) ---")
         while True:
             try:
+                if self.thread and self.thread.is_alive():
+                    print("🔈 语音合成中...")
+                    self.thread.join()
+                    self.thread = None
+
                 user_input = input("\n👤 我: ").strip()
                 if not user_input:
-                    continue
-                
+                    continue                
                 if user_input.lower() in ['quit', 'exit']:
                     print("👋 再见！")
                     break
@@ -64,16 +61,15 @@ class AIVTuber:
                     continue
 
                 # 1. AI 思考
-                print("🤖 思考中...")
+                print("💬 思考中...")
+                start_time = time.time()
                 reply_text, emotion, intensity = self.brain.chat(user_input)
+                elapsed_time = time.time() - start_time
+                print(f"思考耗时: {elapsed_time:.4f} 秒")
                 print(f"🤖 AI: {reply_text}")
 
-                # 重新实现一个简单播放
-                self._play_audio_and_mouth(reply_text)
+                self._play_audio(reply_text)
 
-            except KeyboardInterrupt:
-                print("\n👋 程序被用户中断。")
-                break
             except Exception as e:
                 print(f"❌ 运行出错: {e}")
 
