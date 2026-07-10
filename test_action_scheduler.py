@@ -45,14 +45,9 @@ class ActionScheduler:
     5. 空闲状态：没有动作时回到默认状态
     """
 
-    def __init__(self, vts_controller, idle_config: Optional[Dict] = None):
-        """
-        Args:
-            vts_controller: VTSController实例
-            idle_config: 空闲状态配置，如 {"MouthOpen": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7}
-        """
-        self.vts = vts_controller
-        self.idle_config = idle_config or {"MouthOpen": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7}
+    def __init__(self):
+        self.vts = VTSController()
+        self.idle_config = EMOTION_BASE_CONFIG.get("Peaceful", {}).get("base_params", {})
 
         # 动作队列
         self.action_queue = deque()
@@ -183,7 +178,7 @@ class ActionScheduler:
         根据情绪添加动作（便捷方法）
         
         Args:
-            emotion: 情绪名称 (开心/生气/难过/惊讶/平静)
+            emotion: 情绪名称 (Happy/Angry/Sad/Surprised/Idle)  
             intensity: 强度 0.0-1.0
         """
         action = self._create_emotion_action(emotion, intensity)
@@ -484,11 +479,11 @@ class ActionScheduler:
 
 if __name__ == "__main__":
     # 创建控制器
-    vts = VTSController(VTS_CONFIG)
+    vts = VTSController()
     vts.connect()
     
     # 创建调度器
-    scheduler = ActionScheduler(vts, idle_config={"MouthOpen": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7})
+    scheduler = ActionScheduler()
     
     # 设置回调
     def on_action_start(action):
@@ -504,7 +499,7 @@ if __name__ == "__main__":
     scheduler.start()
     
     # 添加示例动作
-    # 1. 开心表情
+    # 1. Happy表情
     happy_action = scheduler.create_expression_action("Smile.exp3.json", duration=3.0)
     scheduler.add_action(happy_action)
     
@@ -520,7 +515,7 @@ if __name__ == "__main__":
     scheduler.add_action(hotkey_action, immediate=True)  # 立即执行
     
     # 4. 使用情绪便捷方法
-    scheduler.add_emotion_action("开心", intensity=0)
+    scheduler.add_emotion_action("Happy", intensity=0)
     
     hotkey_action = scheduler.create_hotkey_action("My Animation 2")
     scheduler.add_action(hotkey_action, immediate=True)  # 立即执行

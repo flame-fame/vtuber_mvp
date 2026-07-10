@@ -2,11 +2,11 @@ import time
 import threading
 import random
 from typing import Dict, List, Optional, Callable, Any
-from enum import Enum
 from dataclasses import dataclass, field
 from collections import deque
-from vts_controller import VTSController
 from config import *
+from vts_controller import VTSController
+
 # ==================== 数据结构定义 ====================
 @dataclass
 class Action:
@@ -45,14 +45,11 @@ class ActionScheduler:
     5. 空闲状态：没有动作时回到默认状态
     """
 
-    def __init__(self, vts_controller, idle_config: Optional[Dict] = None):
-        """
-        Args:
-            vts_controller: VTSController实例
-            idle_config: 空闲状态配置，如 {"MouthOpen": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7}
-        """
-        self.vts = vts_controller
-        self.idle_config = idle_config or {"MouthOpen": 0.0, "EyeOpenLeft": 0.7, "EyeOpenRight": 0.7}
+    def __init__(self):
+        # 初始化VTS控制器
+        self.vts = VTSController()
+        # 初始化空闲状态参数
+        self.idle_config = EMOTION_BASE_CONFIG.get("Peaceful", {}).get("base_params", {})
 
         # 动作队列
         self.action_queue = deque()
@@ -80,9 +77,14 @@ class ActionScheduler:
 
     def start(self):
         """启动调度器"""
+        # 检查VTS是否建立
+        if not self.vts:
+            print("新建VTS实例失败")
+            return
+        # 检查是否已启动
         if self.is_running:
             return
-
+        # 启动调度线程
         self.is_running = True
         self.scheduler_thread = threading.Thread(target=self._run_loop, daemon=True)
         self.scheduler_thread.start()
@@ -93,14 +95,17 @@ class ActionScheduler:
         self.is_running = False
         if self.scheduler_thread:
             self.scheduler_thread.join(timeout=2)
+        self.vts.close()
         print("🛑 动作调度器已停止")
 
     def pause(self):
         self.is_paused = True
-
+        print("⏸ 动作调度器已暂停")
+    
     def resume(self):
         self.is_paused = False
-
+        print("▶️ 动作调度器已恢复")
+    
     # ========== 核心调度循环 ==========
 
     def _run_loop(self):
@@ -178,17 +183,17 @@ class ActionScheduler:
         for action in actions:
             self.add_action(action, immediate)
 
-    def add_emotion_action(self, emotion: str, intensity: float = 0.5):
+    def add_emotion_action(self, emotion: str, intensity: float = 0.5, immediate: bool = False):
         """
         根据情绪添加动作（便捷方法）
         
         Args:
-            emotion: 情绪名称 (开心/生气/难过/惊讶/平静)
+            emotion: 情绪名称 (Happy/Angry/Sad/Surprised/Idle)
             intensity: 强度 0.0-1.0
         """
         action = self._create_emotion_action(emotion, intensity)
         if action:
-            self.add_action(action)
+            self.add_action(action, immediate)
 
     def clear_queue(self):
         """清空队列"""
@@ -229,8 +234,6 @@ class ActionScheduler:
                 self._execute_hotkey(action)
             elif action.action_type == ActionType.MOVE:
                 self._execute_move(action)
-            elif action.action_type == ActionType.ANIMATION:
-                self._execute_animation(action)
             elif action.action_type == ActionType.COMPOSITE:
                 self._execute_composite(action)
         except Exception as e:
@@ -270,10 +273,6 @@ class ActionScheduler:
             duration=action.data.get("duration", 0.5),
             relative=action.data.get("relative", False)
         )
-    def _execute_animation(self, action: Action):
-        """执行动画动作"""
-        animation_file = action.data.get("animation_file")
-        self.vts.play_animation(animation_file, fade_time=action.fade_in)
 
     def _execute_composite(self, action: Action):
         """执行复合动作（按顺序执行多个子动作）"""
@@ -296,7 +295,7 @@ class ActionScheduler:
             if self.on_action_end:
                 self.on_action_end(old_action)
 
-    def _interrupt_current_action(self,next_action: Action = None):
+    def _interrupt_current_action(self, next_action: Action = None):
         """中断当前动作"""
         # 快速淡出
         if self.current_action and self.current_action.fade_out > 0:
@@ -376,7 +375,7 @@ class ActionScheduler:
             "priority": base_cfg["priority"],
         }
 
-        # 构建动作
+        # 构建复合动作
         action = Action(
             action_id=f"emotion_{emotion}_{int(time.time())}",
             action_type=ActionType.COMPOSITE,
@@ -412,7 +411,7 @@ class ActionScheduler:
 
         return action
 
-    # ========== 预定义动作模板 ==========
+    # ========== 创建动作 ==========
 
     def create_expression_action(self, expression_file: str, 
                                   duration: float = 2.0,

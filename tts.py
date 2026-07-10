@@ -8,7 +8,7 @@ import time
 class TTSEngine:
     """语音合成引擎"""
     
-    def __init__(self, voice: str = "zh-CN-XiaoxiaoNeural", rate: str = "+5%"):
+    def __init__(self, voice: str , rate: str):
         self.voice = voice
         self.rate = rate
         self.is_playing = False

@@ -35,15 +35,22 @@ AI_CONFIG = {
         要求：
         1. 回答必须简短，不超过50个汉字
         2. 语气要带点嘲讽，但偶尔流露出温柔
-        3. 根据情绪在回答末尾加上表情标签，只能使用以下标签：[开心]、[生气]、[难过]、[惊讶]、[害羞]、[思考]、[平静]   
+        3. 根据情绪在回答末尾加上表情标签和强度（0-1），只能使用以下标签：[Happy]、[Angry]、[Sad]、[Surprised]、[Peaceful]，示例：[Happy:0.8]、[Angry:0.5]、[Sad:0.3]、[Surprised:0.7]、[Peaceful:0.5]   
     """,
     "temperature": 0.85,
-    "max_tokens": 100
+    "max_tokens": 100,
+    "max_history": 10  # 保留最近10条对话
+}
+
+# TTS 配置
+TTS_CONFIG = {
+    "voice": "zh-CN-XiaoxiaoNeural",
+    "rate": "+5%",
 }
 
 # 情绪静态基础配置：只存固定文件名、基础参数、系数、时长、优先级
 EMOTION_BASE_CONFIG = {
-    "开心": {
+    "Happy": {
         "expression_file": "Smile.exp3.json",
         "base_params": {
             "MouthOpen_base": 0.3,
@@ -56,7 +63,7 @@ EMOTION_BASE_CONFIG = {
         "duration": 2.0,
         "priority": ActionPriority.NORMAL
     },
-    "生气": {
+    "Angry": {
         "expression_file": "Angry.exp3.json",
         "base_params": {
             "MouthOpen": 0.2,
@@ -68,7 +75,7 @@ EMOTION_BASE_CONFIG = {
         "duration": 1.5,
         "priority": ActionPriority.NORMAL
     },
-    "惊讶": {
+    "Surprised": {
         "expression_file": "Surprised.exp3.json",
         "base_params": {
             "MouthOpen_base": 0.7,
@@ -79,7 +86,7 @@ EMOTION_BASE_CONFIG = {
         "duration": 1.0,
         "priority": ActionPriority.HIGH
     },
-    "难过": {
+    "Sad": {
         "expression_file": "Sad.exp3.json",
         "base_params": {
             "MouthOpen": 0.1,
@@ -91,7 +98,7 @@ EMOTION_BASE_CONFIG = {
         "duration": 2.0,
         "priority": ActionPriority.NORMAL
     },
-    "平静": {
+    "Peaceful": {
         "expression_file": None,
         "base_params": {
             "MouthOpen": 0.0,

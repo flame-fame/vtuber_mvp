@@ -4,14 +4,15 @@ import time
 import threading
 import uuid
 from typing import Optional, Dict, Callable
+from config import *
 
 class VTSController:
     """VTube Studio WebSocket API 控制器"""
     
-    def __init__(self, config: Dict):
-        self.ws_url = config.get("ws_url", "ws://localhost:8001")
-        self.plugin_name = config.get("plugin_name", "MyAIVTuber")
-        self.plugin_developer = config.get("plugin_developer", "LXL")
+    def __init__(self):
+        self.ws_url = VTS_CONFIG["ws_url"]
+        self.plugin_name = VTS_CONFIG["plugin_name"]
+        self.plugin_developer = VTS_CONFIG["plugin_developer"]
         
         self.ws = None
         self.authenticated = False
@@ -49,7 +50,7 @@ class VTSController:
                 time.sleep(0.5)
             
             if not self.connected:
-                print("❌ 连接超时")
+                print("❌ VTS - 连接超时")
                 return False
                 
             # 等待认证（最多15秒）
@@ -59,14 +60,14 @@ class VTSController:
                 time.sleep(0.5)
             
             if self.authenticated:
-                print("✅ VTS 连接和认证成功！")
+                print("✅ VTS - 连接和认证成功！")
                 return True
             else:
-                print("⚠️ 连接成功但未认证，请检查VTS是否允许插件")
+                print("⚠️ VTS - 连接成功但未认证，请检查是否允许插件")
                 return True  # 仍然返回True，让用户通过交互完成认证
                 
         except Exception as e:
-            print(f"❌ 连接失败: {e}")
+            print(f"❌ VTS - 连接失败: {e}")
             return False
     
     def _on_open(self, ws):
@@ -264,7 +265,7 @@ class VTSController:
     def get_available_models(self):
         """获取可用模型列表"""
         if not self.authenticated:
-            print("❌ 未认证")
+            print("❌ VTS 未认证")
             return
         return self._send_request("AvailableModelsRequest", {})
     
@@ -305,3 +306,4 @@ class VTSController:
         """关闭连接"""
         if self.ws:
             self.ws.close()
+        print("✅ VTS连接已关闭")

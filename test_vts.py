@@ -42,11 +42,11 @@ class VTSConnection:
             time.sleep(10)
             return True
         except Exception as e:
-            print(f"❌ 连接失败: {e}")
+            print(f"❌ VTS 连接失败: {e}")
             return False
 
     def on_open(self, ws):
-        print("✅ WebSocket 连接已建立")
+        print("✅ VTS WebSocket 连接已建立")
         # 连接成功后，首先请求API状态（这是官方推荐的第一个步骤）
         self.send_request("APIStateRequest", {})
 
@@ -61,18 +61,18 @@ class VTSConnection:
             if msg_type == "APIStateResponse":
                 is_auth = data.get("data", {}).get("currentSessionAuthenticated", False)
                 if is_auth:
-                    print("ℹ️ 当前会话已认证")
+                    print("ℹ️ VTS 当前会话已认证")
                     self.authenticated = True
                 else:
-                    print("🔑 当前会话未认证，尝试使用本地 Token...")
+                    print("🔑 VTS 当前会话未认证，尝试使用本地 Token...")
                     # ✅ 先尝试读取本地保存的 token
                     saved_token = self.load_token()
                     if saved_token:
                         self.token = saved_token
-                        print(f"📂 找到本地 Token: {saved_token[:8]}...，直接尝试认证")
+                        print(f"📂 VTS - 找到本地 Token: {saved_token[:8]}...，直接尝试认证")
                         self.authenticate_session()
                     else:
-                        print("❌ 本地 Token 不存在或为空，开始完整认证流程...")
+                        print("❌ VTS - 本地 Token 不存在或为空，开始完整认证流程...")
                         self.request_auth_token()
 
             # 处理认证令牌响应
@@ -80,11 +80,11 @@ class VTSConnection:
                 token = data.get("data", {}).get("authenticationToken")
                 if token:
                     self.token = token
-                    print(f"✅ 成功获取认证令牌: {token[:8]}...")
+                    print(f"✅ VTS - 成功获取认证令牌: {token[:8]}...")
                     # 第二步：使用令牌进行会话认证
                     self.authenticate_session()
                 else:
-                    print("❌ 获取认证令牌失败")
+                    print("❌ VTS - 获取认证令牌失败")
 
             # 处理会话认证响应
             elif msg_type == "AuthenticationResponse":
@@ -94,11 +94,11 @@ class VTSConnection:
                     # ✅ 认证成功后保存 token
                     if self.token:
                         self.save_token(self.token)
-                    print("🎉 会话认证成功！可以开始控制模型了。")
+                    print("🎉 VTS - 会话认证成功！可以开始控制模型了。")
                     # 认证成功后，可以执行初始化操作，例如获取当前模型信息
                     self.send_request("CurrentModelRequest", {})
                 else:
-                    print(f"❌ 会话认证失败: {auth_data.get('reason')}")
+                    print(f"❌ VTS - 会话认证失败: {auth_data.get('reason')}")
                     # 清除失效的本地 token
                     if os.path.exists(TOKEN_FILE):
                         os.remove(TOKEN_FILE)
@@ -109,11 +109,11 @@ class VTSConnection:
             elif msg_type == "CurrentModelResponse":
                 model_data = data.get("data", {})
                 if model_data.get("modelLoaded"):
-                    print(f"📦 当前模型: {model_data.get('modelName')}")
+                    print(f"📦 VTS - 当前模型: {model_data.get('modelName')}")
                     # 可以在这里添加初始化的表情或动作
                     # self.trigger_expression("your_expression_name")
                 else:
-                    print("ℹ️ 当前未加载任何模型")
+                    print("ℹ️ VTS - 当前未加载任何模型")
 
             # 处理通用错误响应
             elif msg_type == "APIError":
@@ -127,21 +127,21 @@ class VTSConnection:
                 self.response_store[request_id] = data
 
         except json.JSONDecodeError:
-            print(f"⚠️ 收到非JSON消息: {message}")
+            print(f"⚠️ VTS 收到非JSON消息: {message}")
         except Exception as e:
-            print(f"⚠️ 处理消息时出错: {e}")
+            print(f"⚠️ VTS - 处理消息时出错: {e}")
 
     def on_error(self, ws, error):
-        print(f"⚠️ WebSocket 错误: {error}")
+        print(f"⚠️ VTS - WebSocket 错误 : {error}")
 
     def on_close(self, ws, close_status_code, close_msg):
-        print("🔌 WebSocket 连接已关闭")
+        print("🔌 VTS - WebSocket 连接已关闭")
         self.authenticated = False
 
     def send_request(self, msg_type, data_payload, request_id=None):
         """发送请求到VTS API"""
         if not self.ws:
-            print("❌ WebSocket未连接")
+            print("❌ VTS - WebSocket未连接") 
             return None
 
         if request_id is None:
@@ -158,13 +158,13 @@ class VTSConnection:
             self.ws.send(json.dumps(request))
             return request_id
         except Exception as e:
-            print(f"❌ 发送请求失败: {e}")
+            print(f"❌ VTS - 发送请求失败: {e}")
             return None
 
     # ============== API 认证流程方法 ==============
     def request_auth_token(self):
         """请求认证令牌（会触发VTS弹窗）"""
-        print("⏳ 正在请求认证令牌，请在VTube Studio中允许插件访问...")
+        print("⏳ VTS - 正在请求认证令牌，请在VTube Studio中允许插件访问...") 
         self.send_request(
             "AuthenticationTokenRequest",
             {
@@ -177,9 +177,9 @@ class VTSConnection:
     def authenticate_session(self):
         """使用令牌认证当前会话"""
         if not self.token:
-            print("❌ 没有可用的令牌，请先请求令牌")
+            print("❌ VTS - 没有可用的令牌，请先请求令牌") 
             return
-        print("⏳ 正在进行会话认证...")
+        print("⏳ VTS - 正在进行会话认证...")   
         self.send_request(
             "AuthenticationRequest",
             {
@@ -208,9 +208,6 @@ class VTSConnection:
     # ============== 核心控制方法 ==============
     def set_parameter(self, param_id, value):
         """设置一个Live2D参数（例如口型、表情）"""
-        if not self.authenticated:
-            print("❌ 未认证，无法控制参数")
-            return
         # 注意：这里使用的是"InjectParameterDataRequest"
         # 它用于覆盖面部追踪等输入参数
         self.send_request(
@@ -223,9 +220,6 @@ class VTSConnection:
 
     def trigger_hotkey(self, hotkey_id):
         """触发一个已配置的热键"""
-        if not self.authenticated:
-            print("❌ 未认证，无法触发热键")
-            return
         self.send_request("HotkeyTriggerRequest", {"hotkeyID": hotkey_id})
 
     def get_model_info(self):
@@ -245,11 +239,12 @@ def main():
         return
 
     # 等待认证完成（简单起见，等待几秒）
-    print("⏳ 等待认证流程完成... (请留意VTS的弹窗)")
+    print("⏳ VTS - 等待认证流程完成... (请留意VTS的弹窗)")
     time.sleep(6)  # 给用户留出点击"允许"的时间
 
+    # 检查认证状态
     if vts.authenticated:
-        print("\n🎮 开始演示控制！")
+        print("\n🎮 VTS - 开始演示控制！")
 
         # 演示1: 让模型张嘴 (MouthOpen 是常用参数)
         print("👄 张嘴 (参数值 0.8)...")
