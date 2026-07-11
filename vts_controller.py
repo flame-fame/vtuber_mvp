@@ -53,8 +53,8 @@ class VTSController:
                 print("❌ VTS - 连接超时")
                 return False
                 
-            # 等待认证（最多15秒）
-            for _ in range(30):
+            # 等待认证（最多10秒）
+            for _ in range(20):
                 if self.authenticated:
                     break
                 time.sleep(0.5)
@@ -70,6 +70,7 @@ class VTSController:
             print(f"❌ VTS - 连接失败: {e}")
             return False
     
+    #=====================WebSocket 回调函数 ======================
     def _on_open(self, ws):
         """连接打开回调"""
         print("✅ WebSocket 连接已建立")

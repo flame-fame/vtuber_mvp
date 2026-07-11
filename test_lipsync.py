@@ -41,7 +41,7 @@ class AIVTuber:
 
     def run(self):
         """主循环"""
-        print("\n--- 输入文字开始对话 (输入 'exit' 退出, 'clear' 清空记忆) ---")
+        print("\n--- 输入文字开始对话 (输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆) ---")
         while True:
             try:
                 if self.thread and self.thread.is_alive():
@@ -52,9 +52,14 @@ class AIVTuber:
                 user_input = input("\n👤 我: ").strip()
                 if not user_input:
                     continue                
-                if user_input.lower() in ['quit', 'exit']:
+                if user_input.lower() == 'quit':
+                    self.brain.close()
                     print("👋 再见！")
                     break
+                if user_input.lower() == 'history':
+                    for item in self.brain.conversation_history:
+                        print(item)
+                    continue
                 if user_input.lower() == 'clear':
                     self.brain.clear_history()
                     print("🧠 记忆已清空。")

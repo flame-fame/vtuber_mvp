@@ -81,7 +81,11 @@ class AIBrain:
         return 0.5  # 默认强度值
     
     
-    
+    def close(self):
+        """关闭时调用"""
+        self.clear_history()
+        print("🧠 记忆已清空。")
+
     def clear_history(self):
         """清空对话历史"""
         self.conversation_history = []

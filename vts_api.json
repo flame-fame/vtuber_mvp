@@ -1,0 +1,143 @@
+{
+  "api_info": {
+    "name": "VTube Studio Public API",
+    "protocol": "WebSocket JSON",
+    "common_fields": ["apiName", "apiVersion", "requestID", "messageType"]
+  },
+  "requests": {
+    "authentication_and_base": [
+      {
+        "messageType": "AuthenticationTokenRequest",
+        "description": "请求获取认证 Token（首次连接时触发用户授权弹窗）"
+      },
+      {
+        "messageType": "AuthenticationRequest",
+        "description": "使用 Token 进行身份验证，建立会话"
+      },
+      {
+        "messageType": "APIStateRequest",
+        "description": "查询当前 API 的状态信息"
+      }
+    ],
+    "statistics_and_tracking": [
+      {
+        "messageType": "StatisticsRequest",
+        "description": "获取 VTS 运行统计信息（FPS、模型加载时间等）"
+      },
+      {
+        "messageType": "Live2DParameterListRequest",
+        "description": "获取当前 Live2D 模型的所有参数列表及其当前值"
+      },
+      {
+        "messageType": "TrackingParameterListRequest",
+        "description": "获取所有可用的面部/身体追踪参数列表"
+      },
+      {
+        "messageType": "ParameterValueRequest",
+        "description": "获取指定参数的当前值（支持批量查询）"
+      }
+    ],
+    "model_management": [
+      {
+        "messageType": "CurrentModelRequest",
+        "description": "获取当前已加载模型的信息"
+      },
+      {
+        "messageType": "AvailableModelsRequest",
+        "description": "获取所有可用模型的列表"
+      },
+      {
+        "messageType": "ModelLoadRequest",
+        "description": "加载指定 ID 的模型"
+      },
+      {
+        "messageType": "MoveModelRequest",
+        "description": "移动/缩放/旋转当前模型的位置"
+      }
+    ],
+    "animation_and_expression": [
+      {
+        "messageType": "AnimationListRequest",
+        "description": "获取当前模型可用的动画/表情列表"
+      },
+      {
+        "messageType": "AnimationPlayRequest",
+        "description": "播放指定的动画或表情"
+      },
+      {
+        "messageType": "AnimationStopRequest",
+        "description": "停止当前正在播放的动画"
+      },
+      {
+        "messageType": "HotkeyListRequest",
+        "description": "获取所有已配置的快捷键列表"
+      },
+      {
+        "messageType": "HotkeyTriggerRequest",
+        "description": "通过 API 触发指定的快捷键"
+      }
+    ],
+    "parameter_injection": [
+      {
+        "messageType": "InjectParameterDataRequest",
+        "description": "向 Live2D 模型注入自定义参数值（用于外部驱动）"
+      },
+      {
+        "messageType": "ParameterOverrideRequest",
+        "description": "设置/清除参数覆盖（临时锁定某个参数的值）"
+      }
+    ],
+    "items": [
+      {
+        "messageType": "ItemListRequest",
+        "description": "获取当前场景中所有物品的列表"
+      },
+      {
+        "messageType": "ItemLoadRequest",
+        "description": "加载一个物品到场景中"
+      },
+      {
+        "messageType": "ItemUnloadRequest",
+        "description": "从场景中移除一个物品"
+      },
+      {
+        "messageType": "ItemMoveRequest",
+        "description": "移动/缩放/旋转场景中的物品"
+      },
+      {
+        "messageType": "ItemAnimationControlRequest",
+        "description": "控制物品的动画播放状态"
+      }
+    ],
+    "audio_and_lipsync": [
+      {
+        "messageType": "AudioParameterListRequest",
+        "description": "获取音频相关参数列表"
+      },
+      {
+        "messageType": "MouthSyncRequest",
+        "description": "手动控制口型同步数据"
+      }
+    ],
+    "event_subscription": [
+      {
+        "messageType": "EventSubscriptionRequest",
+        "description": "订阅/取消订阅特定事件（如模型切换、热键触发、跟踪数据变化等），VTS 会主动推送事件消息"
+      }
+    ],
+    "others": [
+      {
+        "messageType": "NdiConfigRequest",
+        "description": "配置 NDI 输出设置"
+      },
+      {
+        "messageType": "ColorOverlayRequest",
+        "description": "设置颜色叠加/滤镜效果"
+      },
+      {
+        "messageType": "BackgroundChangeRequest",
+        "description": "更改背景图片/颜色"
+      }
+    ]
+  }
+}
