@@ -224,8 +224,6 @@ class ActionScheduler:
                 self._execute_hotkey(action)
             elif action.action_type == ActionType.MOVE:
                 self._execute_move(action)
-            elif action.action_type == ActionType.ANIMATION:
-                self._execute_animation(action)
             elif action.action_type == ActionType.COMPOSITE:
                 self._execute_composite(action)
         except Exception as e:
@@ -265,11 +263,7 @@ class ActionScheduler:
             duration=action.data.get("duration", 0.5),
             relative=action.data.get("relative", False)
         )
-    def _execute_animation(self, action: Action):
-        """执行动画动作"""
-        animation_file = action.data.get("animation_file")
-        self.vts.play_animation(animation_file, fade_time=action.fade_in)
-
+    
     def _execute_composite(self, action: Action):
         """执行复合动作（按顺序执行多个子动作）"""
         sub_actions = action.data.get("sub_actions", [])
@@ -517,8 +511,6 @@ if __name__ == "__main__":
     # 4. 使用情绪便捷方法
     scheduler.add_emotion_action("Happy", intensity=0)
     
-    hotkey_action = scheduler.create_hotkey_action("My Animation 2")
-    scheduler.add_action(hotkey_action, immediate=True)  # 立即执行
     # 运行一段时间
     time.sleep(10)
     

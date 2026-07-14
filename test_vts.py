@@ -9,7 +9,7 @@ from config import *
 import uuid
 
 
-class VTSConnection:
+class VTSController:
     def __init__(self):
         self.ws_url = VTS_CONFIG["ws_url"]
         self.plugin_name = VTS_CONFIG["plugin_name"]
@@ -340,7 +340,7 @@ def main():
     print("🚀 VTube Studio MVP 控制器")
     print("=" * 50)
 
-    vts = VTSConnection()
+    vts = VTSController()
     if not vts.connect():
         print("💡 请确保VTube Studio已启动，并且API端口设置为8001")
         return
@@ -358,6 +358,7 @@ def main():
     if vts.authenticated:
         print("输入 'param <name> <value>' 控制参数")
         print("输入 'hotkey <id>' 触发热键")
+        print("输入 'expression <name>' 激活/取消表情")
         print("输入 'quit' 退出程序")
 
         # 简单的交互循环

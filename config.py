@@ -12,7 +12,6 @@ class ActionPriority(Enum):
 class ActionType(Enum):
     """动作类型"""
     EXPRESSION = "expression"      # 表情文件
-    ANIMATION = "animation"        # 动作文件
     PARAMETER = "parameter"        # 参数调整
     HOTKEY = "hotkey"              # 热键
     MOVE = "move"                  # 模型移动
