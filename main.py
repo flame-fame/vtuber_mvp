@@ -1,21 +1,21 @@
 import time
-from config import VTS_CONFIG, AI_CONFIG, EMOTION_TO_VTS
-from vts_controller import VTSController
+import sys
+from config import *
 from ai_brain import AIBrain
 from tts import TTSEngine
+from action_scheduler import ActionScheduler
 
 class AIVTuber:
     """AI主播主程序"""
     
     def __init__(self):
         # 初始化各模块
-        self.vts = VTSController(VTS_CONFIG)
-        self.brain = AIBrain(AI_CONFIG)
-        self.tts = TTSEngine()
-        
-        # 表情映射
-        self.emotion_map = EMOTION_TO_VTS
-        
+        self.action_scheduler = ActionScheduler()
+        self.action_scheduler.on_action_start = self._on_action_start
+        self.action_scheduler.on_action_end = self._on_action_end
+        self.brain = AIBrain(AI_CONFIG["model_name"], AI_CONFIG["system_prompt"], AI_CONFIG["temperature"], AI_CONFIG["max_tokens"])
+        self.tts = TTSEngine(TTS_CONFIG["voice"], TTS_CONFIG["rate"])
+    
         # 运行状态
         self.running = True
         
@@ -26,13 +26,9 @@ class AIVTuber:
         print("="*60)
         
         # 1. 连接VTS
-        if not self.vts.connect():
-            print("❌ VTS连接失败，请检查：")
-            print("  1. VTube Studio是否已启动")
-            print("  2. 是否已开启'允许插件API访问'")
-            print("  3. 端口是否为8001")
-            print("  程序将以文本模式运行（无皮套驱动）")
-        
+        if not self.action_scheduler:
+            print("❌ 调度器初始化失败")
+            return
         # 2. 主循环
         print("\n💡 输入 'quit' 退出，输入 'clear' 清空记忆")
         print("💡 输入 'reset' 重置VTS模型")
@@ -62,17 +58,15 @@ class AIVTuber:
                 print("💬 AI 思考中...", end="", flush=True)
                 start_time = time.time()
                 
-                ai_text, emotion = self.brain.chat(user_input)
+                ai_text, emotion, intensity = self.brain.chat(user_input)
                 
                 elapsed = time.time() - start_time
                 print(f" (耗时 {elapsed:.2f}秒)")
                 print(f"🤖 AI主播: {ai_text}")
-                print(f"😊 情绪: {emotion}")
+                print(f"😊 情绪: {emotion}，强度：{intensity}")
                 
-                # 驱动VTS皮套
-                if self.vts.authenticated:
-                    self._drive_vts(emotion)
-                
+                self._drive_model(emotion, intensity)
+
                 # TTS语音
                 if ai_text:
                     self.tts.speak(ai_text)
@@ -86,28 +80,27 @@ class AIVTuber:
         
         # 清理资源
         self._cleanup()
-    
-    def _drive_vts(self, emotion: str):
-        """根据情绪驱动VTS"""
-        params = self.emotion_map.get(emotion, self.emotion_map["平静"])
-        self.vts.set_parameters(params)
-    
+
     def _reset_model(self):
-        """重置VTS模型"""
-        if self.vts.authenticated:
-            self.vts.set_parameters(self.emotion_map["平静"])
-            print("✅ VTS模型已重置")
-        else:
-            print("❌ VTS未认证，无法重置")
+        idle_action=self.action_scheduler.create_hotkey_action("Peaceful", priority=ActionPriority.HIGH)
+        self.action_scheduler.add_action(idle_action, immediate=True)
+        print("✅ VTS模型已重置为 'Peaceful'")
+
+    def _drive_model(self, emotion: str, intensity: float = 1.0):
+       self.action_scheduler.add_emotion_action(emotion, intensity, immediate=True)
+       print(f"✅ VTS模型已驱动为 {emotion}，强度 {intensity}")
     
     def _cleanup(self):
         """清理资源"""
-        print("🧹 正在清理资源...")
-        if self.vts.authenticated:
-            # 重置模型到平静状态
-            self.vts.set_parameters(self.emotion_map["平静"])
-        self.vts.close()
+        self.action_scheduler.stop()
         print("👋 程序已退出")
+
+    def _on_action_start(self, action):
+        print(f"🎯 皮套动作: {action.action_id}")
+    
+    def _on_action_end(self, action):
+        pass  # 或记录日志
+    
 
 # ================= 程序入口 =================
 if __name__ == "__main__":

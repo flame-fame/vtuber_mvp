@@ -333,3 +333,66 @@ class VTSController:
         return self.message_callbacks
     def get_response(self):
         return self.response_store
+
+# ================= 主程序入口 =================
+def main():
+    print("=" * 50)
+    print("🚀 VTube Studio MVP 控制器")
+    print("=" * 50)
+
+    vts = VTSController()
+    if not vts.connect():
+        print("💡 请确保VTube Studio已启动，并且API端口设置为8001")
+        return
+
+    # 等待认证完成（简单起见，等待几秒）
+    print("⏳ VTS - 等待认证流程完成... (请留意VTS的弹窗)")
+    start_time = time.time()
+    while not vts.authenticated:
+        if time.time() - start_time > 10:
+            print("❌ 认证超时，请检查VTS设置并重新运行。")
+            break
+        time.sleep(0.1)  # 给用户留出点击"允许"的时间
+
+    # 检查认证状态
+    if vts.authenticated:
+        print("输入 'param <name> <value>' 控制参数")
+        print("输入 'hotkey <id>' 触发热键")
+        print("输入 'expression <name>' 激活/取消表情")
+        print("输入 'quit' 退出程序")
+
+        # 简单的交互循环
+        while True:
+            try:
+                cmd = input("\n> ").strip().split()
+                if not cmd:
+                    continue
+                if cmd[0] == "quit":
+                    break
+                elif cmd[0] == "param" and len(cmd) == 3:
+                    vts.set_parameter(cmd[1], float(cmd[2]))
+                elif cmd[0] == "hotkey" and len(cmd) == 2:
+                    vts.trigger_hotkey(cmd[1])
+                elif cmd[0] == "callback":
+                    print(vts.get_callback())
+                elif cmd[0] == "response":
+                    print(vts.get_response())
+                elif cmd[0] == "model_info":
+                    print(vts.get_model_info())
+                elif cmd[0] == "expression" and len(cmd) == 2:
+                    vts.activate_expression(cmd[1])
+                else:
+                    print("⚠️ 无效命令")
+            except KeyboardInterrupt:
+                break
+            except Exception as e:
+                print(f"⚠️ 输入错误: {e}")
+    else:
+        print("❌ 认证失败，请检查VTS设置并重新运行。")
+
+    vts.close()
+    print("👋 退出程序")
+
+
+if __name__ == "__main__":
+    main()

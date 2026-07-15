@@ -8,7 +8,7 @@ import time
 class TTSEngine:
     """语音合成引擎"""
     
-    def __init__(self, voice: str = "zh-CN-XiaoxiaoNeural", rate: str = "+5%"):
+    def __init__(self, voice: str , rate: str):
         self.voice = voice
         self.rate = rate
         self.is_playing = False
@@ -41,7 +41,7 @@ class TTSEngine:
 
             end_time = time.time()
             elapsed_time = end_time - start_time
-            print(f"🔈 TTS 合成完成，耗时: {elapsed_time:.2f} 秒")
+            print(f"语音合成完毕，耗时: {elapsed_time:.2f} 秒")
             
             pygame.mixer.init()
             pygame.mixer.music.load(tmp_path)
