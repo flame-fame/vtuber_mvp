@@ -1,6 +1,5 @@
 import time
-import sys
-from config import *
+from config import VTS_CONFIG, AI_CONFIG, EMOTION_TO_VTS
 from vts_controller import VTSController
 from ai_brain import AIBrain
 from tts import TTSEngine

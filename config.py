@@ -26,9 +26,9 @@ AI_CONFIG = {
 
 # 参数映射：AI情绪 -> VTS参数
 EMOTION_TO_VTS = {
-    "开心": {"MouthSmile": 1, "EyeSmileLeft": 1, "EyeSmileRight": 1, "BrowFormRight": 1, "BrowFormLeft": 1,},
-    "生气": {"MouthSmile": 0.0, "EyeSmileLeft": 0, "EyeSmileRight": 0, "BrowFormRight": 0.8, "BrowFormLeft": 0.8, "FaceAngleY": -10.0},
-    "难过": {"MouthSmile": -1, "EyeSmileLeft": 0, "EyeSmileRight": 0, "BrowFormRight": -0.8, "BrowFormLeft": -0.8, "FaceAngleX": -5.0},
+    "开心": {"MouthSmile": 1, "EyeOpenLeft": 1, "EyeOpenRight": 1, "BrowRightY": 1, "BrowLeftY": 1,},
+    "生气": {"MouthSmile": 0.0, "EyeOpenLeft": 0, "EyeOpenRight": 0, "BrowRightY": 0.8, "BrowLeftY": 0.8, "FaceAngleY": -10.0},
+    "难过": {"MouthSmile": -1, "EyeOpenLeft": 0, "EyeOpenRight": 0, "BrowRightY": -0.8, "BrowLeftY": -0.8, "FaceAngleX": -5.0},
     "惊讶": {"MouthOpen": 0.9, "EyeOpenLeft": 1.0, "EyeOpenRight": 1.0, "FaceAngleY": 0.0},
     "害羞": {"MouthShape": 0.3, "EyeOpenLeft": 0.5, "EyeOpenRight": 0.5, "FaceAngleX": 0.0, "FaceAngleY": 0.0},
     "思考": {"MouthShape": 0.3, "EyeOpenLeft": 0.5, "EyeOpenRight": 0.5, "FaceAngleX": 0.0, "FaceAngleY": 0.0},

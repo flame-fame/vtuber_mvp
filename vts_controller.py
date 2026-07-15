@@ -98,7 +98,7 @@ class VTSController:
                 token = data.get("data", {}).get("authenticationToken")
                 if token:
                     self.token = token
-                    print(f"✅ 获取认证令牌成功")
+                    print("✅ 获取认证令牌成功")
                     self._authenticate_session()
                 else:
                     print("❌ 获取认证令牌失败")
