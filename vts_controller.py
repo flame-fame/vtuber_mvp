@@ -176,12 +176,12 @@ class VTSController:
         self.connected = False
         print(f"⚠️ VTS - WebSocket 错误 : {error}")
 
-    def _on_close(self, ws):
+    def _on_close(self, ws, close_status_code, close_msg):
         self.connected = False
         self.authenticated = False
         self.token = None
 
-        print("🔌 VTS - WebSocket 连接已关闭")
+        print(f"🔌 VTS - WebSocket 连接已关闭: {close_status_code} {close_msg}")    
 
     # ============== 内部方法 - 发送请求和注册回调 ==============
 

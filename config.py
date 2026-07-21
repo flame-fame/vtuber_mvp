@@ -22,7 +22,7 @@ VTS_CONFIG = {
     "ws_url": "ws://localhost:8001",
     "plugin_name": "MyAIVTuber",
     "plugin_developer": "LXL",
-    "token_file": "vts_token.txt",
+    "token_file": "token.txt",
 }
 
 # AI 配置
