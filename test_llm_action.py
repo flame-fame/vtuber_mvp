@@ -76,7 +76,7 @@ class AIVTuber:
                 self._play_audio(reply_text)
 
                 # 2. 执行 VTS 动作
-                self.vts.trigger_hotkey('MyAnimation1')
+                self.vts.trigger_hotkey('Smile')
 
             except Exception as e:
                 print(f"❌ 运行出错: {e}")

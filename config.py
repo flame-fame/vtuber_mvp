@@ -1,21 +1,13 @@
 # ==================== 配置文件 ====================
 # 动作优先级\动作类型
 from enum import Enum
+from re import I
 class ActionPriority(Enum):
-    """动作优先级（数值越高优先级越高）"""
-    BACKGROUND = 0      # 背景级：空闲状态
-    LOW = 1             # 低：默认表情
-    NORMAL = 2          # 普通：情绪表达
-    HIGH = 3            # 高：重要反应
-    CRITICAL = 4        # 关键：打断当前所有动作
-
-class ActionType(Enum):
-    """动作类型"""
-    EXPRESSION = "expression"      # 表情文件
-    PARAMETER = "parameter"        # 参数调整
-    HOTKEY = "hotkey"              # 热键
-    MOVE = "move"                  # 模型移动
-    COMPOSITE = "composite"        # 复合动作
+    """数值越小，优先级越高 (0 > 1 > 2)"""
+    IDLE = 3              # 空闲级：呼吸、眨眼（最低优先级）
+    TALKING = 2           # 说话级：日常对话（中优先级，可打断空闲）
+    REACTION = 1          # 反应级：感谢礼物、欢迎（高优先级，可打断说话）
+    SYSTEM = 0            # 系统级：如报错、下播（最高优先级，可打断所有动作）
 
 # VTube Studio 配置
 VTS_CONFIG = {
@@ -59,7 +51,7 @@ EMOTION_BASE_CONFIG = {
             "EyeOpenRight_coeff": 0.3,
         },
         "duration": 2.0,
-        "priority": ActionPriority.NORMAL
+        "priority": ActionPriority.TALKING
     },
     "Angry": {
         "expression_file": "Angry.exp3.json",
@@ -71,7 +63,7 @@ EMOTION_BASE_CONFIG = {
             "FaceAngleY_coeff": -5
         },
         "duration": 1.5,
-        "priority": ActionPriority.NORMAL
+        "priority": ActionPriority.TALKING
     },
     "Surprised": {
         "expression_file": "Surprised.exp3.json",
@@ -82,7 +74,7 @@ EMOTION_BASE_CONFIG = {
             "EyeOpenRight": 0.9
         },
         "duration": 1.0,
-        "priority": ActionPriority.HIGH
+        "priority": ActionPriority.TALKING
     },
     "Sad": {
         "expression_file": "Sad.exp3.json",
@@ -94,7 +86,7 @@ EMOTION_BASE_CONFIG = {
             "FaceAngleX_coeff": -3
         },
         "duration": 2.0,
-        "priority": ActionPriority.NORMAL
+        "priority": ActionPriority.TALKING
     },
     "Peaceful": {
         "expression_file": None,
@@ -104,7 +96,7 @@ EMOTION_BASE_CONFIG = {
             "EyeOpenRight": 0.7
         },
         "duration": 1.0,
-        "priority": ActionPriority.BACKGROUND
+        "priority": ActionPriority.IDLE
     }
 }
 
