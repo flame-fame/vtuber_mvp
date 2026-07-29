@@ -185,7 +185,7 @@ class VTSController:
 
     # ============== 内部方法 - 发送请求和注册回调 ==============
 
-    def _send_request(self, msg_type: str, data_payload: Dict, request_id=None):
+    async def _send_request(self, msg_type: str, data_payload: Dict, request_id = None):
         """发送请求到VTS API"""
         if not self.ws:
             print("❌ VTS - WebSocket未连接, 无法发送请求")
@@ -203,9 +203,11 @@ class VTSController:
             "data": data_payload,
         }
         try:
-            self.ws.send(json.dumps(request))
+            await self.ws.send(json.dumps(request))
             print(f"✅ VTS - 发送请求成功: {request_id}:{data_payload}")
-            return request_id
+            resp=json.loads(await self.ws.recv())
+            print(f"✅ VTS - 收到响应: {request_id}:{resp}")
+            return resp
         except Exception as e:
             print(f"❌ VTS - 发送请求失败: {e}")
             return None
@@ -315,6 +317,12 @@ class VTSController:
         """获取当前加载的模型信息"""
         print(f"✅ VTS - 发送获取当前模型信息请求")
         return self._send_request("CurrentModelRequest", {})
+
+    # 获取所有热键的真实 ID
+    def discover_hotkeys(self):
+        resp = self._send_request("HotkeysInCurrentModelRequest", {})
+        for hk in resp["data"]["availableHotkeys"]:
+            print(f"  {hk['name']:25s} | ID: {hk['hotkeyID']} | Type: {hk['type']}")
 
     def trigger_hotkey(self, hotkey_id):
         """触发一个已配置的热键"""

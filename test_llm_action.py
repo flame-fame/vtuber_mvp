@@ -3,7 +3,7 @@ import time
 import threading
 from config import *
 from ai_brain import AIBrain
-from tts import TTSEngine
+from tts_engine import TTSEngine
 from vts_controller import VTSController
 
 class AIVTuber:
@@ -76,7 +76,7 @@ class AIVTuber:
                 self._play_audio(reply_text)
 
                 # 2. 执行 VTS 动作
-                self.vts.trigger_hotkey('Smile')
+                self.vts.set_parameter(emotion, intensity)
 
             except Exception as e:
                 print(f"❌ 运行出错: {e}")

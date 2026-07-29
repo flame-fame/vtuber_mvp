@@ -147,6 +147,11 @@ class VTSController:
                 else:
                     print("ℹ️ VTS - 当前未加载任何模型")
 
+            elif msg_type == "HotkeysInCurrentModelResponse":
+                hks = data.get("data", "availableHotkeys")
+                for hk in hks:
+                    print(f"🉑 VTS - 当前可用热键:  {hk['name']:25s} | ID: {hk['hotkeyID']} | Type: {hk['type']}")
+            
             # 处理通用错误响应
             elif msg_type == "APIError":
                 error_data = data.get("data", {})
@@ -206,6 +211,7 @@ class VTSController:
             self.ws.send(json.dumps(request))
             print(f"✅ VTS - 发送请求成功: {request_id}:{data_payload}")
             return request_id
+
         except Exception as e:
             print(f"❌ VTS - 发送请求失败: {e}")
             return None
@@ -321,6 +327,13 @@ class VTSController:
         self._send_request("HotkeyTriggerRequest", {"hotkeyID": hotkey_id})
         print(f"✅ VTS - 发送触发热键请求 {hotkey_id}")
 
+    # 获取所有热键的真实 ID
+    def discover_hotkeys(self):
+        """获取当前加载模型的所有热键"""
+        print(f"✅ VTS - 发送获取当前模型热键请求")
+        return self._send_request("HotkeysInCurrentModelRequest", {})
+        
+
     def close(self):
         """关闭与websocket的连接"""
         self.ws.close()
@@ -357,6 +370,7 @@ def main():
     # 检查认证状态
     if vts.authenticated:
         print("输入 'param <name> <value>' 控制参数")
+        print("输入 'available_hotkeys' 查看可用热键")
         print("输入 'hotkey <id>' 触发热键")
         print("输入 'expression <name>' 激活/取消表情")
         print("输入 'quit' 退出程序")
@@ -371,6 +385,8 @@ def main():
                     break
                 elif cmd[0] == "param" and len(cmd) == 3:
                     vts.set_parameter(cmd[1], float(cmd[2]))
+                elif cmd[0] == "available_hotkeys":
+                    vts.discover_hotkeys()
                 elif cmd[0] == "hotkey" and len(cmd) == 2:
                     vts.trigger_hotkey(cmd[1])
                 elif cmd[0] == "callback":

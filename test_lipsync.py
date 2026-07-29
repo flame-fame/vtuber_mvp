@@ -3,7 +3,7 @@ import time
 import threading
 from config import *
 from ai_brain import AIBrain
-from tts import TTSEngine
+from tts_engine import TTSEngine
 from vts_controller import VTSController
 
 class AIVTuber:
