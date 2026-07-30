@@ -7,6 +7,7 @@ from typing import Dict, Callable,Optional
 from config import *
 # 用于生成唯一的请求ID
 import uuid
+import asyncio
 
 
 class VTSController:
@@ -27,6 +28,8 @@ class VTSController:
         self.message_callbacks = []
         # 线程锁
         self.lock = threading.Lock()
+        # 热键映射
+        self.hotkey_map={}
 
     def connect(self):
         """建立WebSocket连接"""
@@ -63,6 +66,8 @@ class VTSController:
 
             if self.authenticated:
                 print("✅ VTS - 连接和认证成功！")
+                # 初始化热键映射
+                self._build_hotkey_map()
                 return True
             else:
                 print("⚠️ VTS - 连接成功但未认证，请检查是否允许插件")
@@ -147,6 +152,16 @@ class VTSController:
                 else:
                     print("ℹ️ VTS - 当前未加载任何模型")
 
+            # 处理当前模型热键响应
+            elif msg_type == "HotkeysInCurrentModelResponse":
+                hotkeys_data = data.get("data", {})
+                for hotkey in hotkeys_data.get("availableHotkeys", []):
+                    name = hotkey.get("name")
+                    self.hotkey_map[name] = name
+                print(f"✅ VTS - 成功获取{len(self.hotkey_map)}个热键")
+                   
+
+
             # 处理通用错误响应
             elif msg_type == "APIError":
                 error_data = data.get("data", {})
@@ -157,7 +172,6 @@ class VTSController:
             # 将响应存储，供send_request方法使用（如果需要同步等待）
             if request_id:
                 self.response_store[request_id] = data
-                print(f"✅ VTS - 成功存储响应: {request_id}:{data}")
 
             # 调用注册的回调函数
             with self.lock:
@@ -185,7 +199,7 @@ class VTSController:
 
     # ============== 内部方法 - 发送请求和注册回调 ==============
 
-    async def _send_request(self, msg_type: str, data_payload: Dict, request_id = None):
+    def _send_request(self, msg_type: str, data_payload: Dict, request_id = None):
         """发送请求到VTS API"""
         if not self.ws:
             print("❌ VTS - WebSocket未连接, 无法发送请求")
@@ -193,7 +207,6 @@ class VTSController:
 
         if request_id is None:
             request_id = str(uuid.uuid4())[:8]
-            print(f"✅ VTS - 生成新请求ID: {request_id}")
 
         request = {
             "apiName": "VTubeStudioPublicAPI",
@@ -203,11 +216,9 @@ class VTSController:
             "data": data_payload,
         }
         try:
-            await self.ws.send(json.dumps(request))
+            self.ws.send(json.dumps(request))
             print(f"✅ VTS - 发送请求成功: {request_id}:{data_payload}")
-            resp=json.loads(await self.ws.recv())
-            print(f"✅ VTS - 收到响应: {request_id}:{resp}")
-            return resp
+            return request_id
         except Exception as e:
             print(f"❌ VTS - 发送请求失败: {e}")
             return None
@@ -296,21 +307,32 @@ class VTSController:
         print(f"✅ VTS - 发送设置参数请求 {parameters}")
 
     def activate_expression(
-        self, expression_name: str, fade_time: float = 0.25, active: bool = True
+        self, expression_name: str, fade_time: float = 0.5, active: bool = True
     ):
         """激活/取消表情"""
+        name = EMOTION_MAPPING.get(expression_name, {}).get("resource", "")
+        if not name:
+            print(f"⚠️ 未找到名为 '{expression_name}' 的表情资源")
+            return
         if not self.authenticated:
             print("❌ 未认证")
             return
         self._send_request(
             "ExpressionActivationRequest",
             {
-                "expressionFile": f"{expression_name}.exp3.json",
+                "expressionFile": f"{name}.exp3.json",
                 "fadeTime": fade_time,
                 "active": active,
             },
         )
-        print(f"✅ VTS - 发送激活/取消表情请求 {expression_name} {fade_time} {active}")
+
+    async def toggle_expression(self, expression_name: str):
+        """切换表情激活状态
+        """
+        self.activate_expression(expression_name, active=True)
+        await asyncio.sleep(1)
+        self.activate_expression(expression_name, active=False)
+
 
     # 获取当前加载的模型信息
     def get_model_info(self):
@@ -318,11 +340,30 @@ class VTSController:
         print(f"✅ VTS - 发送获取当前模型信息请求")
         return self._send_request("CurrentModelRequest", {})
 
-    # 获取所有热键的真实 ID
-    def discover_hotkeys(self):
-        resp = self._send_request("HotkeysInCurrentModelRequest", {})
-        for hk in resp["data"]["availableHotkeys"]:
-            print(f"  {hk['name']:25s} | ID: {hk['hotkeyID']} | Type: {hk['type']}")
+    # ---------- 新增：获取热键映射 ----------
+    # 在 VTSController 类中添加/修改以下方法
+
+    def _build_hotkey_map(self):
+       """请求热键列表并构建 name→ID 映射（同步等待）"""
+       if self.hotkey_map:   # 已缓存则跳过
+            return
+       print(f"✅ VTS - 发送获取热键列表请求")
+       return self._send_request("HotkeysInCurrentModelRequest", {})
+       
+    # ---------- 新增：按名称触发热键 ----------
+    def trigger_action_by_name(self, hk_name: str) -> bool:
+        """
+        根据热键名称触发对应的热键
+        :param hk_name: 热键名称（如 "点头"）
+        :return: 是否成功触发
+        """
+        name = EMOTION_MAPPING.get(hk_name, {}).get("resource", "")
+        if name:
+            self.trigger_hotkey(name)
+            return True
+        else:
+            print(f"⚠️ 未找到名为 '{hk_name}' 的热键")
+            return False
 
     def trigger_hotkey(self, hotkey_id):
         """触发一个已配置的热键"""

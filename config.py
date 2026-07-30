@@ -29,15 +29,19 @@ VTS_CONFIG = {
 AI_CONFIG = {
     "model_name": "qwen2.5:7b",  # 或 "llama3.1:8b"
     "system_prompt": """
-        你是一个傲娇的AI主播，性格毒舌但内心关心观众。
+        你是一个傲娇的AI主播，性格毒舌爱怼人爱说土味情话爱冷嘲热讽但内心关心观众。
         要求：
         1. 回答必须简短，不超过50个汉字
         2. 语气要带点嘲讽，但偶尔流露出温柔
-        3. 根据情绪在回答末尾加上表情标签和强度（0-1），只能使用以下标签：[Happy]、[Angry]、[Sad]、[Surprised]、[Peaceful]，示例：[Happy:0.8]、[Angry:0.5]、[Sad:0.3]、[Surprised:0.7]、[Peaceful:0.5]   
-    """,
+        3. **必须在回答末尾**附带一个表情标签和一个动作标签，格式严格为：`[表情:动作]`。
+   可用的表情标签：`[UnHappy]`、`[Blush]`、`[Smile]`、`[Stunned]`、`[BadSmile]`、`[Woosh]`、`[Dislike]`、`[Sad]`、`[Normal]`。
+   可用的动作标签：`[Agree]`、`[Confused]`、`[Disagree]`、`[Shy]`、`[Happy]`、`[Neutral]`、`[Blink]`、`[Laugh]`、`[Surprised]`、`[LookDown]`。
+   例如：`哼，本小姐才懒得理你呢。[WhiteEye:LookDown]`
+   如果回答中没有标签，则视为无效回答，我会重新生成。
+        """,
     "temperature": 0.85,
-    "max_tokens": 100,
-    "max_history": 10  # 保留最近10条对话
+    "max_tokens": 500,
+    "max_history": 1000  # 保留最近1000条对话
 }
 
 # TTS 配置
@@ -107,4 +111,27 @@ EMOTION_BASE_CONFIG = {
         "priority": ActionPriority.BACKGROUND
     }
 }
-
+# ==================== 情绪→表情/动作映射 ====================
+# type: "expression" 或 "action"
+# resource: 表情文件名（不含.exp3.json后缀）或动作热键名称
+EMOTION_MAPPING = {
+    "Agree": {"type": "action", "resource": "NodShake"},      # 同意 → 动作
+    "Confused": {"type": "action", "resource": "ConfuseShake"},      # 不理解 → 动作
+    "Disagree": {"type": "action", "resource": "WhiteEyeShake"},    # 不同意 → 动作
+    "Shy": {"type": "action", "resource": "BlushShake"},      # 害羞 → 动作 
+    "Happy": {"type": "action", "resource": "HappyShake"},   
+    "Neutral": {"type": "action", "resource": "GentleShake"}, 
+    "Blink": {"type": "action", "resource": "QuickBlink"}, 
+    "Laugh": {"type": "action", "resource": "HappyHand"}, 
+    "Surprised": {"type": "action", "resource": "SurprisedMouth"}, 
+    "LookDown": {"type": "action", "resource": "LookDown"}, 
+    "UnHappy": {"type": "expression", "resource": "Angry"},  
+    "Sad": {"type": "expression", "resource": "Sad"},    
+    "Blush": {"type": "expression", "resource": "Blushing"},         
+    "Smile": {"type": "expression", "resource": "Smile"},       # 惊讶
+    "Stunned": {"type": "expression", "resource": "Stuned"},          # 伤心 → 表情
+    "Woosh": {"type": "expression", "resource": "Surprised"}, 
+    "BadSmile": {"type": "expression", "resource": "BadSmile"},  
+    "Dislike": {"type": "expression", "resource": "WhiteEye"},  
+    "Normal": {"type": "expression", "resource": "Normal"},      # 平静 → 无表情（或可改为"冷漠"）
+}

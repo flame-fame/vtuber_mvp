@@ -1,6 +1,7 @@
 # 文件名：main.py
 import time
 import threading
+import asyncio
 from config import *
 from ai_brain import AIBrain
 from tts_engine import TTSEngine
@@ -24,31 +25,13 @@ class AIVTuber:
         if not self.vts.connect():
             print("❌ 无法连接到 VTube Studio，请检查是否开启并配置了API。")
             exit(1)
-        
-        # 等待认证完成
-        print("⏳ 等待 VTS 认证...")
-        time.sleep(3) # 简单等待，实际项目中可用 Event 优化
 
-        print("✅ AI 主播初始化完成！准备就绪。")
-
-    def _play_audio(self, text):
-        # 由于原 tts.py 的 speak 方法是同步阻塞的，我们需要在子线程运行它
-        def audio_task():
-            self.tts.speak(text)
-    
-        self.thread = threading.Thread(target=audio_task)
-        self.thread.start()
-
-    def run(self):
+    def run(self):  
         """主循环"""
         print("\n--- 输入文字开始对话 (输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆) ---")
         while True:
             try:
-                if self.thread and self.thread.is_alive():
-                    print("🔈 语音合成中...")
-                    self.thread.join()
-                    self.thread = None
-
+                time.sleep(0.5)
                 user_input = input("\n👤 我: ").strip()
                 if not user_input:
                     continue                
@@ -68,15 +51,15 @@ class AIVTuber:
                 # 1. AI 思考
                 print("💬 思考中...")
                 start_time = time.time()
-                reply_text, emotion, intensity = self.brain.chat(user_input)
+                reply_text, emotion, action = self.brain.chat(user_input)
                 elapsed_time = time.time() - start_time
                 print(f"思考耗时: {elapsed_time:.4f} 秒")
-                print(f"🤖 AI: {reply_text}")
-
-                self._play_audio(reply_text)
-
-                # 2. 执行 VTS 动作
-                self.vts.set_parameter(emotion, intensity)
+                
+                try:
+                    self.vts.activate_expression(emotion, active=True)
+                    self.tts.speak(reply_text)
+                finally:
+                    self.vts.activate_expression(emotion, active=False)
 
             except Exception as e:
                 print(f"❌ 运行出错: {e}")

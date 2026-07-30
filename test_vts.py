@@ -3,6 +3,8 @@ import json
 import time
 import threading
 import os
+import asyncio
+
 from typing import Dict, Callable,Optional
 from config import *
 # 用于生成唯一的请求ID
@@ -27,6 +29,8 @@ class VTSController:
         self.message_callbacks = []
         # 线程锁
         self.lock = threading.Lock()
+        # 热键映射
+        self.hotkey_map={}
 
     def connect(self):
         """建立WebSocket连接"""
@@ -63,6 +67,8 @@ class VTSController:
 
             if self.authenticated:
                 print("✅ VTS - 连接和认证成功！")
+                # 初始化热键映射
+                self._build_hotkey_map()
                 return True
             else:
                 print("⚠️ VTS - 连接成功但未认证，请检查是否允许插件")
@@ -147,11 +153,17 @@ class VTSController:
                 else:
                     print("ℹ️ VTS - 当前未加载任何模型")
 
+            # 处理当前模型热键响应
             elif msg_type == "HotkeysInCurrentModelResponse":
-                hks = data.get("data", "availableHotkeys")
-                for hk in hks:
-                    print(f"🉑 VTS - 当前可用热键:  {hk['name']:25s} | ID: {hk['hotkeyID']} | Type: {hk['type']}")
-            
+                hotkeys_data = data.get("data", {})
+                for hotkey in hotkeys_data.get("availableHotkeys", []):
+                    name = hotkey.get("name")
+                    id = hotkey.get("hotkeyID")
+                    if name and id:
+                        self.hotkey_map[name] = id
+                        print(f"✅ VTS - 成功获取热键: {name} -> ID {id}")
+
+
             # 处理通用错误响应
             elif msg_type == "APIError":
                 error_data = data.get("data", {})
@@ -181,16 +193,16 @@ class VTSController:
         self.connected = False
         print(f"⚠️ VTS - WebSocket 错误 : {error}")
 
-    def _on_close(self, ws):
+    def _on_close(self, ws, close_status_code, close_msg):
         self.connected = False
         self.authenticated = False
         self.token = None
 
-        print("🔌 VTS - WebSocket 连接已关闭")
+        print(f"🔌 VTS - WebSocket 连接已关闭: {close_status_code} {close_msg}")    
 
     # ============== 内部方法 - 发送请求和注册回调 ==============
 
-    def _send_request(self, msg_type: str, data_payload: Dict, request_id=None):
+    def _send_request(self, msg_type: str, data_payload: Dict, request_id = None):
         """发送请求到VTS API"""
         if not self.ws:
             print("❌ VTS - WebSocket未连接, 无法发送请求")
@@ -211,7 +223,6 @@ class VTSController:
             self.ws.send(json.dumps(request))
             print(f"✅ VTS - 发送请求成功: {request_id}:{data_payload}")
             return request_id
-
         except Exception as e:
             print(f"❌ VTS - 发送请求失败: {e}")
             return None
@@ -300,21 +311,32 @@ class VTSController:
         print(f"✅ VTS - 发送设置参数请求 {parameters}")
 
     def activate_expression(
-        self, expression_name: str, fade_time: float = 0.25, active: bool = True
+        self, expression_name: str, fade_time: float = 1.0, active: bool = True
     ):
         """激活/取消表情"""
+        name = EMOTION_MAPPING.get(expression_name, {}).get("resource", "")
+        if not name:
+            print(f"⚠️ 未找到名为 '{expression_name}' 的表情映射 {name}")
+            return
         if not self.authenticated:
             print("❌ 未认证")
             return
         self._send_request(
             "ExpressionActivationRequest",
             {
-                "expressionFile": f"{expression_name}.exp3.json",
+                "expressionFile": f"{name}.exp3.json",
                 "fadeTime": fade_time,
                 "active": active,
             },
         )
         print(f"✅ VTS - 发送激活/取消表情请求 {expression_name} {fade_time} {active}")
+
+    async def toggle_expression(self, expression_name: str):
+        """切换表情激活状态
+        """
+        self.activate_expression(expression_name, active=True)
+        await asyncio.sleep(1)
+        self.activate_expression(expression_name, active=False)
 
     # 获取当前加载的模型信息
     def get_model_info(self):
@@ -322,17 +344,37 @@ class VTSController:
         print(f"✅ VTS - 发送获取当前模型信息请求")
         return self._send_request("CurrentModelRequest", {})
 
+    # ---------- 新增：获取热键映射 ----------
+    # 在 VTSController 类中添加/修改以下方法
+
+    def _build_hotkey_map(self):
+       """请求热键列表并构建 name→ID 映射（同步等待）"""
+       if self.hotkey_map:   # 已缓存则跳过
+            return
+       print(f"✅ VTS - 发送获取热键列表请求")
+       return self._send_request("HotkeysInCurrentModelRequest", {})
+       
+    # ---------- 新增：按名称触发热键 ----------
+    def trigger_action_by_name(self, action_name: str) -> bool:
+        """
+        根据动作名称触发对应的热键
+        :param action_name: 热键名称（如 "点头"）
+        :return: 是否成功触发
+        """
+        if not self.hotkey_map:
+            self._build_hotkey_map()
+        hk_id = self.hotkey_map.get(action_name)
+        if hk_id:
+            self.trigger_hotkey(hk_id)
+            return True
+        else:
+            print(f"⚠️ 未找到名为 '{action_name}' 的热键")
+            return False
+
     def trigger_hotkey(self, hotkey_id):
         """触发一个已配置的热键"""
         self._send_request("HotkeyTriggerRequest", {"hotkeyID": hotkey_id})
         print(f"✅ VTS - 发送触发热键请求 {hotkey_id}")
-
-    # 获取所有热键的真实 ID
-    def discover_hotkeys(self):
-        """获取当前加载模型的所有热键"""
-        print(f"✅ VTS - 发送获取当前模型热键请求")
-        return self._send_request("HotkeysInCurrentModelRequest", {})
-        
 
     def close(self):
         """关闭与websocket的连接"""
@@ -346,6 +388,8 @@ class VTSController:
         return self.message_callbacks
     def get_response(self):
         return self.response_store
+
+
 
 # ================= 主程序入口 =================
 def main():
@@ -370,7 +414,7 @@ def main():
     # 检查认证状态
     if vts.authenticated:
         print("输入 'param <name> <value>' 控制参数")
-        print("输入 'available_hotkeys' 查看可用热键")
+        print("输入 'hotkeys' 查看可用热键")
         print("输入 'hotkey <id>' 触发热键")
         print("输入 'expression <name>' 激活/取消表情")
         print("输入 'quit' 退出程序")
@@ -385,8 +429,9 @@ def main():
                     break
                 elif cmd[0] == "param" and len(cmd) == 3:
                     vts.set_parameter(cmd[1], float(cmd[2]))
-                elif cmd[0] == "available_hotkeys":
-                    vts.discover_hotkeys()
+                elif cmd[0] == "hotkeys":
+                    vts._build_hotkey_map()
+                    print(f"{vts.hotkey_map}")
                 elif cmd[0] == "hotkey" and len(cmd) == 2:
                     vts.trigger_hotkey(cmd[1])
                 elif cmd[0] == "callback":
@@ -396,7 +441,7 @@ def main():
                 elif cmd[0] == "model_info":
                     print(vts.get_model_info())
                 elif cmd[0] == "expression" and len(cmd) == 2:
-                    vts.activate_expression(cmd[1])
+                    asyncio.run(vts.toggle_expression(cmd[1]))
                 else:
                     print("⚠️ 无效命令")
             except KeyboardInterrupt:
