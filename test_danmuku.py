@@ -59,13 +59,17 @@ class AIVTuber:
 
         # 构建用户输入
         if danmaku.dtype == DmType.ENTER:
-            user_input = f"欢迎 {danmaku.username} 进入直播间"
+            user_input = f"{danmaku.username} 进入直播间"
+            sys_reply_text = f"欢迎 {danmaku.username}！"
         elif danmaku.dtype == DmType.FOLLOW:
             user_input = f"{danmaku.username} 关注了主播"
+            sys_reply_text = f"谢谢 {danmaku.username} 的关注"
         elif danmaku.dtype == DmType.GIFT:
             user_input = f"{danmaku.username} 送了 {danmaku.content}"
+            sys_reply_text = f"谢谢 {danmaku.username} 宝宝的礼物，主播爱你哦！"
         elif danmaku.dtype == DmType.SC:
             user_input = f"{danmaku.username} 发送SC：{danmaku.content}"
+            sys_reply_text = f"{danmaku.username} 说：{danmaku.content}，主播看到了！"
         else:
             user_input = f"{danmaku.username}：{danmaku.content}"
 
@@ -75,7 +79,11 @@ class AIVTuber:
         # 1. AI 思考（同步操作）
         print("💬 思考中...")
         start_time = time.time()
-        reply_text, emotion, action = self.brain.chat(user_input)
+        if sys_reply_text:
+            reply_text = sys_reply_text
+        else:
+            reply_text, emotion, action = self.brain.chat(user_input)
+        sys_reply_text = ""
         elapsed_time = time.time() - start_time
         print(f"思考耗时: {elapsed_time:.4f} 秒")
         print(f"🤖 AI: {reply_text}")
