@@ -23,6 +23,7 @@ VTS_CONFIG = {
     "plugin_name": "MyAIVTuber",
     "plugin_developer": "LXL",
     "token_file": "token.txt",
+    "token": "",
 }
 
 # AI 配置
@@ -36,12 +37,14 @@ AI_CONFIG = {
         3. **必须在回答末尾**附带一个表情标签和一个动作标签，格式严格为：`[表情:动作]`。
    可用的表情标签：`[UnHappy]`、`[Blush]`、`[Smile]`、`[Stunned]`、`[BadSmile]`、`[Woosh]`、`[Dislike]`、`[Sad]`、`[Normal]`。
    可用的动作标签：`[Agree]`、`[Confused]`、`[Disagree]`、`[Shy]`、`[Happy]`、`[Neutral]`、`[Blink]`、`[Laugh]`、`[Surprised]`、`[LookDown]`。
-   例如：`哼，本小姐才懒得理你呢。[WhiteEye:LookDown]`
+   例如：`哼，本小姐才懒得理你呢。[WhiteEye:LookDown]`、`你TM真是个人才！[BadSmile:Happy]`。
    如果回答中没有标签，则视为无效回答，我会重新生成。
         """,
-    "temperature": 0.85,
-    "max_tokens": 500,
-    "max_history": 1000  # 保留最近1000条对话
+    "temperature": 0.85,          # 控制文本的随机性/创造性，0-1之间，0越确定，1越随机
+    "max_tokens": 100,            # 最大回复token数
+    "max_history": 10,            # 添加最近10条历史对话上下文
+    "repeat_penalty": 1.2,        # 重复惩罚因子，防止说车轱辘话
+    "num_ctx": 4096,              # 上下文token数，影响模型记忆能力
 }
 
 # TTS 配置

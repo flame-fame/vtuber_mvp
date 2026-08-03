@@ -26,7 +26,7 @@ class AIVTuber:
             print("❌ 无法连接到 VTube Studio，请检查是否开启并配置了API。")
             exit(1)
 
-    def run(self):  
+    async def run(self):  
         """主循环"""
         print("\n--- 输入文字开始对话 (输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆) ---")
         while True:
@@ -44,20 +44,22 @@ class AIVTuber:
                         print(item)
                     continue
                 if user_input.lower() == 'clear':
-                    self.brain.clear_history()
+                    await self.brain.clear_history()
                     print("🧠 记忆已清空。")
                     continue
 
                 # 1. AI 思考
                 print("💬 思考中...")
                 start_time = time.time()
-                reply_text, emotion, action = self.brain.chat(user_input)
+                reply_text, emotion, action = await self.brain.chat(user_input)
                 elapsed_time = time.time() - start_time
                 print(f"思考耗时: {elapsed_time:.4f} 秒")
                 
                 try:
                     self.vts.activate_expression(emotion, active=True)
-                    self.tts.speak(reply_text)
+                    # 确保 TTS 引擎使用当前事件循环
+                    self.tts.set_loop(asyncio.get_running_loop())
+                    await self.tts._speak_async(reply_text)
                 finally:
                     self.vts.activate_expression(emotion, active=False)
 
@@ -66,4 +68,4 @@ class AIVTuber:
 
 if __name__ == "__main__":
     app = AIVTuber()
-    app.run()
+    asyncio.run(app.run())

@@ -12,6 +12,11 @@ class TTSEngine:
         self.voice = voice
         self.rate = rate
         self.is_playing = False
+        self._loop = None
+
+    def set_loop(self, loop:asyncio.BaseEventLoop):
+        """设置事件循环"""
+        self._loop = loop
         
     def speak(self, text: str):
         """播放语音（同步）"""
@@ -19,18 +24,21 @@ class TTSEngine:
             return
             
         try:
-            # 异步执行TTS
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(self._speak_async(text))
-            loop.close()
+            if self._loop:
+                # 使用已有的循环
+                self._loop.run_until_complete(self._speak_async(text))
+            else:
+                # 创建新的循环（兼容旧用法）
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(self._speak_async(text))
+                loop.close()
         except Exception as e:
             print(f"❌ TTS 播放失败: {e}")
     
     async def _speak_async(self, text: str):
         """异步执行TTS"""
         try:
-            
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_file:
                 tmp_path = tmp_file.name
             
@@ -43,6 +51,7 @@ class TTSEngine:
             elapsed_time = end_time - start_time
             print(f"语音合成完毕，耗时: {elapsed_time:.2f} 秒")
             
+            # 播放音频（同步操作）
             pygame.mixer.init()
             pygame.mixer.music.load(tmp_path)
             pygame.mixer.music.play()
@@ -51,8 +60,6 @@ class TTSEngine:
             while pygame.mixer.music.get_busy():
                 time.sleep(0.1)
             self.is_playing = False
-            
-            
             
             pygame.mixer.quit()
             os.unlink(tmp_path)

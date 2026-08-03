@@ -12,7 +12,6 @@ SYSTEM_PROMPT = """
 要求：
 1. 回答必须简短，不超过30个汉字
 2. 语气要带点嘲讽，但偶尔流露出温柔
-3. 适当使用颜文字或emoji（如 (╯°□°)╯、❤️）
 """
 
 MODEL_NAME = "qwen2.5:7b"  # 如果显存低于4GB，改成 "qwen2.5:3b"
@@ -47,8 +46,12 @@ async def text_to_speech(text):
             tmp_path = tmp_file.name
         
         # 调用 Edge TTS 合成语音
+        start_time = time.time()
         communicate = edge_tts.Communicate(text, VOICE_NAME, rate="+5%")
         await communicate.save(tmp_path)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"语音合成完毕，耗时: {elapsed_time:.2f} 秒")
         
         # 使用 pygame 播放音频
         pygame.mixer.init()
@@ -94,6 +97,8 @@ async def main():
         
         # 3. 语音播报
         await text_to_speech(ai_text)
+        
+    
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,5 +1,7 @@
 import time
 import sys
+import asyncio
+import threading
 from config import *
 from ai_brain import AIBrain
 from tts_engine import TTSEngine
@@ -19,7 +21,7 @@ class AIVTuber:
         # 运行状态
         self.running = True
         
-    def start(self):
+    async def start(self):
         """启动AI主播"""
         print("="*60)
         print("🤖 AI 主播 v2.0 (集成VTS)")
@@ -58,7 +60,7 @@ class AIVTuber:
                 print("💬 AI 思考中...", end="", flush=True)
                 start_time = time.time()
                 
-                ai_text, emotion, intensity = self.brain.chat(user_input)
+                ai_text, emotion, intensity = await self.brain.chat(user_input)
                 
                 elapsed = time.time() - start_time
                 print(f" (耗时 {elapsed:.2f}秒)")
@@ -105,4 +107,4 @@ class AIVTuber:
 # ================= 程序入口 =================
 if __name__ == "__main__":
     app = AIVTuber()
-    app.start()
+    asyncio.run(app.start())

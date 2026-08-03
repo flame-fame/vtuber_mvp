@@ -1,6 +1,6 @@
-# 文件名：main.py
 import time
 import threading
+import asyncio
 from config import *
 from ai_brain import AIBrain
 from tts_engine import TTSEngine
@@ -39,7 +39,7 @@ class AIVTuber:
         self.thread = threading.Thread(target=audio_task)
         self.thread.start()
 
-    def run(self):
+    async def run(self):
         """主循环"""
         print("\n--- 输入文字开始对话 (输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆) ---")
         while True:
@@ -68,7 +68,7 @@ class AIVTuber:
                 # 1. AI 思考
                 print("💬 思考中...")
                 start_time = time.time()
-                reply_text, emotion, intensity = self.brain.chat(user_input)
+                reply_text, emotion, intensity = await self.brain.chat(user_input)
                 elapsed_time = time.time() - start_time
                 print(f"思考耗时: {elapsed_time:.4f} 秒")
                 print(f"🤖 AI: {reply_text}")
@@ -80,4 +80,4 @@ class AIVTuber:
 
 if __name__ == "__main__":
     app = AIVTuber()
-    app.run()
+    asyncio.run(app.run())

@@ -1,10 +1,12 @@
 # 文件名：test_llm_action.py
+# 功能：测试弹幕读取和作为输入
+# 流程：1.先读取用户输入 2.再读取弹幕输入
 import time
 import threading
 import asyncio
 from config import *
 from ai_brain import AIBrain
-from my_tts_engine import TTSEngine
+from tts_engine import TTSEngine
 from vts_controller import VTSController
 from danmaku_reader import DanmakuReader, DmType
 
@@ -33,8 +35,8 @@ class AIVTuber:
         print("⏳ 等待 VTS 认证...")
         time.sleep(3)
 
-        # 3. 初始化默认表情
-        self.vts.activate_expression("Normal", active=True)
+        # 3. 初始化默认动作
+        self.vts.trigger_action_by_name("Neutral")
         
         print("✅ AI 主播初始化完成！准备就绪。")
 
@@ -56,20 +58,20 @@ class AIVTuber:
         # 跳过系统消息
         if danmaku.dtype == DmType.SYSTEM:
             return
-
+        
         # 构建用户输入
+        sys_reply_text = ""
         if danmaku.dtype == DmType.ENTER:
             user_input = f"{danmaku.username} 进入直播间"
             sys_reply_text = f"欢迎 {danmaku.username}！"
         elif danmaku.dtype == DmType.FOLLOW:
             user_input = f"{danmaku.username} 关注了主播"
-            sys_reply_text = f"谢谢 {danmaku.username} 的关注"
+            sys_reply_text = f"谢谢 {danmaku.username} 关注主播"
         elif danmaku.dtype == DmType.GIFT:
             user_input = f"{danmaku.username} 送了 {danmaku.content}"
             sys_reply_text = f"谢谢 {danmaku.username} 宝宝的礼物，主播爱你哦！"
         elif danmaku.dtype == DmType.SC:
             user_input = f"{danmaku.username} 发送SC：{danmaku.content}"
-            sys_reply_text = f"{danmaku.username} 说：{danmaku.content}，主播看到了！"
         else:
             user_input = f"{danmaku.username}：{danmaku.content}"
 
@@ -79,11 +81,16 @@ class AIVTuber:
         # 1. AI 思考（同步操作）
         print("💬 思考中...")
         start_time = time.time()
+        # 系统生成欢迎和感谢回复
         if sys_reply_text:
             reply_text = sys_reply_text
+            emotion = "Normal"
+            action = "Neutral"
+            sys_reply_text = ""
         else:
-            reply_text, emotion, action = self.brain.chat(user_input)
-        sys_reply_text = ""
+            # 普通弹幕，调用 AI 思考
+            reply_text, emotion, action = await self.brain.chat(user_input)
+        
         elapsed_time = time.time() - start_time
         print(f"思考耗时: {elapsed_time:.4f} 秒")
         print(f"🤖 AI: {reply_text}")
@@ -94,6 +101,7 @@ class AIVTuber:
         if emotion != "Normal":
             self.vts.activate_expression(emotion, active=True)
             emotion_duration = EMOTION_BASE_CONFIG.get(emotion, {}).get("duration", 2.0)
+            # 同步阻塞的代码，用Threading执行
             threading.Timer(emotion_duration, lambda: self.vts.activate_expression(emotion, active=False)).start()
         else:
             self.vts.activate_expression("Normal", active=True)
