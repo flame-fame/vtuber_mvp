@@ -118,16 +118,16 @@ EMOTION_BASE_CONFIG = {
 # type: "expression" 或 "action"
 # resource: 表情文件名（不含.exp3.json后缀）或动作热键名称
 EMOTION_MAPPING = {
-    "Agree": {"type": "action", "resource": "NodShake"},      # 同意 → 动作
-    "Confused": {"type": "action", "resource": "ConfuseShake"},      # 不理解 → 动作
-    "Disagree": {"type": "action", "resource": "WhiteEyeShake"},    # 不同意 → 动作
-    "Shy": {"type": "action", "resource": "BlushShake"},      # 害羞 → 动作 
-    "Happy": {"type": "action", "resource": "HappyShake"},   
-    "Neutral": {"type": "action", "resource": "GentleShake"}, 
-    "Blink": {"type": "action", "resource": "QuickBlink"}, 
-    "Laugh": {"type": "action", "resource": "HappyHand"}, 
-    "Surprised": {"type": "action", "resource": "SurprisedMouth"}, 
-    "LookDown": {"type": "action", "resource": "LookDown"}, 
+    "Agree": {"type": "action", "resource": "Idle01"},      # 同意 → 动作
+    "Confused": {"type": "action", "resource": "Idle02"},      # 不理解 → 动作
+    "Disagree": {"type": "action", "resource": "Annoyed"},    # 不同意 → 动作
+    "Shy": {"type": "action", "resource": "Blushing"},      # 害羞 → 动作 3
+    "Happy": {"type": "action", "resource": "Smile"},   
+    "Neutral": {"type": "action", "resource": "Idle01"}, 
+    "Blink": {"type": "action", "resource": "Surprised"}, 
+    "Laugh": {"type": "action", "resource": "Proud"}, 
+    "Surprised": {"type": "action", "resource": "Surprised"}, 
+    "Sad": {"type": "action", "resource": "Sad"}, 
     "UnHappy": {"type": "expression", "resource": "Angry"},  
     "Sad": {"type": "expression", "resource": "Sad"},    
     "Blush": {"type": "expression", "resource": "Blushing"},         
