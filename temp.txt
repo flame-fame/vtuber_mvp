@@ -1,0 +1,37 @@
+@dataclass
+class Live2DParams:
+    """需要发送给 VTubeStudio 的最终模型参数集（每帧更新）"""
+    ParamFacePositionX: float = 0.0     #身体位置x,左右平移，[-5,5]
+    ParamFacePositionY: float = 0.0     #身体位置y,上下平移，[-5,5]
+    ParamFacePositionZ: float = 0.0     #身体位置z,前后平移，[-5,5]
+
+    ParamAngleX: float = 0.0        # 人脸角度 X，脸左转右转，[-30，30]
+    ParamAngleY: float = 0.0        # 人脸角度 Y，抬头低头，[-30，30]
+    ParamAngleZ: float = 0.0        # 人脸角度 Z，左右歪头，[-30，30]
+    ParamCheek: float = 0.0         # 脸红，[-1，0]
+
+    ParamMouthForm: float = 0.0        # 嘴角上扬程度，[-1，1]
+    ParamMouthOpenY: float = 0.0       # 嘴巴张开大小，[0，1]
+
+    ParamEyeLOpen: float = 1.0        # 左眼开闭 [0-1.2]
+    ParamEyeROpen: float = 1.0        # 右眼开闭 [0-1.2]
+    ParamEyeLSmile: float = 0.0      # 左眼微笑 [0-1]
+    ParamEyeRSmile: float = 0.0      # 右眼微笑 [0-1]
+    ParamEyeBallX: float = 0.0      # 左眼球 X，[-1，1]
+    ParamEyeBallY: float = 0.0      # 左眼球 Y，[-1，1]
+
+    ParamBrowLForm: float = 0.0      # 左眉毛紧锁或舒展形状 [-1，1]
+    ParamBrowRForm: float = 0.0      # 右眉毛紧锁或舒展形状 [-1，1]
+
+    ParamBodyAngleX: float = 0.0        # 人体角度 X，左转右转，[-10，10]
+    ParamBodyAngleY: float = 0.0        # 人体角度 Y，挺胸含胸，[-10，10]
+    ParamBodyAngleZ: float = 0.0        # 人体角度 Z，左摆右摆，[-10，10]
+
+    ParamArmLA: float = 0.0        # 左臂张开角度 [-10，10]
+    ParamArmRA: float = 0.0        # 右臂张开角度 [-10，10]
+
+现有上述参数，请你给出一个各类表情、常规动作、舞蹈、微动作到参数的映射表，用json格式给出，给出清晰注释，能在本项目直接使用。
+1.身体动作参数包括x轴是身体的向左向右转动、y轴是挺胸含胸、z轴是身体的左右摇摆。注意z轴不是前后，模拟前后运动应该用ParamFacePositionZ参数，这个才是z轴前后运动。
+2.头部动作参数包括x轴是头部的向左向右转动、y轴抬头低头、z轴头部的左右摇摆。
+3.手臂动作很有限，只能在身体两侧微微摆动。给出的动作应该以身体和头部的转动、摆动为主，不能有手部大幅运动的动作，比如“招手”“比心”“伸手”“用手指”等
+4.人物位移参数包括上下左右前后，模拟人物在3维空间的运动。

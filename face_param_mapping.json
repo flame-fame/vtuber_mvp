@@ -1,4 +1,4 @@
-Live2DParam_Map = {
+{
     "ParamFacePositionX": "FacePositionX",
     "ParamFacePositionY": "FacePositionY",
     "ParamFacePositionZ": "FacePositionZ",
@@ -26,5 +26,5 @@ Live2DParam_Map = {
     "ParamBodyAngleZ": "HandLeftPositionZ",
 
     "ParamArmLA": "HandLeftAngleX",
-    "ParamArmRA": "HandRightAngleX",
+    "ParamArmRA": "HandRightAngleX"
 }

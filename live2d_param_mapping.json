@@ -1,0 +1,539 @@
+{
+  "_description": "Live2D VTubeStudio 表情动作参数映射表（v2，适配身体位置参数，限制手臂动作）",
+  "_parameter_ranges": {
+    "身体位置 (平移)": "ParamFacePositionX/Y/Z ∈ [-5, 5]",
+    "头部角度": "ParamAngleX/Y/Z ∈ [-30, 30]",
+    "脸颊": "ParamCheek ∈ [-1, 0]",
+    "嘴角": "ParamMouthForm ∈ [-1, 1]",
+    "嘴张开": "ParamMouthOpenY ∈ [0, 1]",
+    "眼睛开闭": "ParamEyeLOpen/ROpen ∈ [0, 1.2]",
+    "眼睛微笑": "ParamEyeLSmile/RSmile ∈ [0, 1]",
+    "眼球": "ParamEyeBallX/Y ∈ [-1, 1]",
+    "眉毛": "ParamBrowLForm/RForm ∈ [-1, 1]",
+    "身体角度": "ParamBodyAngleX/Y/Z ∈ [-10, 10]",
+    "手臂 (仅微摆)": "ParamArmLA/RA ∈ [-3, 3] (实际使用时幅度控制在 ±2 以内)"
+  },
+
+  "expressions": {
+    "_comment": "持续表情状态，仅影响面部参数，不涉及身体运动",
+
+    "neutral": {
+      "ParamMouthForm": 0.0,
+      "ParamCheek": 0.0,
+      "ParamBrowLForm": 0.0,
+      "ParamBrowRForm": 0.0,
+      "ParamEyeLSmile": 0.0,
+      "ParamEyeRSmile": 0.0
+    },
+
+    "happy": {
+      "ParamMouthForm": 0.8,
+      "ParamCheek": -0.3,
+      "ParamEyeLSmile": 0.5,
+      "ParamEyeRSmile": 0.5,
+      "ParamBrowLForm": 0.3,
+      "ParamBrowRForm": 0.3
+    },
+
+    "very_happy": {
+      "ParamMouthForm": 1.0,
+      "ParamMouthOpenY": 0.6,
+      "ParamCheek": -0.6,
+      "ParamEyeLSmile": 0.8,
+      "ParamEyeRSmile": 0.8,
+      "ParamEyeLOpen": 0.6,
+      "ParamEyeROpen": 0.6,
+      "ParamBrowLForm": 0.5,
+      "ParamBrowRForm": 0.5
+    },
+
+    "sad": {
+      "ParamMouthForm": -0.5,
+      "ParamBrowLForm": -0.6,
+      "ParamBrowRForm": -0.6,
+      "ParamEyeLOpen": 0.7,
+      "ParamEyeROpen": 0.7,
+      "ParamCheek": -0.1
+    },
+
+    "angry": {
+      "ParamMouthForm": -0.6,
+      "ParamBrowLForm": 0.8,
+      "ParamBrowRForm": 0.8,
+      "ParamEyeLOpen": 1.1,
+      "ParamEyeROpen": 1.1,
+      "ParamCheek": -0.3
+    },
+
+    "surprised": {
+      "ParamMouthOpenY": 0.8,
+      "ParamMouthForm": 0.2,
+      "ParamBrowLForm": -0.7,
+      "ParamBrowRForm": -0.7,
+      "ParamEyeLOpen": 1.2,
+      "ParamEyeROpen": 1.2
+    },
+
+    "shy": {
+      "ParamMouthForm": 0.3,
+      "ParamCheek": -0.8,
+      "ParamEyeLSmile": 0.3,
+      "ParamEyeRSmile": 0.3,
+      "ParamEyeLOpen": 0.8,
+      "ParamEyeROpen": 0.8,
+      "ParamEyeBallX": 0.3,
+      "ParamEyeBallY": -0.2
+    },
+
+    "serious": {
+      "ParamMouthForm": 0.0,
+      "ParamBrowLForm": 0.3,
+      "ParamBrowRForm": 0.3,
+      "ParamEyeLOpen": 1.0,
+      "ParamEyeROpen": 1.0
+    },
+
+    "teasing": {
+      "ParamMouthForm": 0.6,
+      "ParamEyeLSmile": 0.4,
+      "ParamEyeRSmile": 0.6,
+      "ParamBrowLForm": 0.2,
+      "ParamBrowRForm": 0.1,
+      "ParamCheek": -0.2
+    },
+
+    "bored": {
+      "ParamEyeLOpen": 0.5,
+      "ParamEyeROpen": 0.5,
+      "ParamMouthOpenY": 0.15,
+      "ParamMouthForm": -0.1,
+      "ParamBrowLForm": 0.1,
+      "ParamBrowRForm": 0.1
+    },
+
+    "confused": {
+      "ParamBrowLForm": -0.4,
+      "ParamBrowRForm": 0.5,
+      "ParamMouthForm": -0.2,
+      "ParamMouthOpenY": 0.1,
+      "ParamEyeBallX": -0.3,
+      "ParamEyeBallY": 0.2,
+      "ParamEyeLOpen": 1.0,
+      "ParamEyeROpen": 0.9
+    },
+
+    "disgusted": {
+      "ParamMouthForm": -0.7,
+      "ParamBrowLForm": 0.9,
+      "ParamBrowRForm": 0.9,
+      "ParamEyeLOpen": 0.7,
+      "ParamEyeROpen": 0.7
+    },
+
+    "excited": {
+      "ParamMouthForm": 0.9,
+      "ParamMouthOpenY": 0.3,
+      "ParamCheek": -0.5,
+      "ParamBrowLForm": -0.5,
+      "ParamBrowRForm": -0.5,
+      "ParamEyeLOpen": 1.15,
+      "ParamEyeROpen": 1.15,
+      "ParamEyeLSmile": 0.6,
+      "ParamEyeRSmile": 0.6
+    },
+
+    "pain": {
+      "ParamEyeLOpen": 0.2,
+      "ParamEyeROpen": 0.2,
+      "ParamBrowLForm": 0.7,
+      "ParamBrowRForm": 0.7,
+      "ParamMouthForm": -0.4,
+      "ParamMouthOpenY": 0.2
+    },
+
+    "sleepy": {
+      "ParamEyeLOpen": 0.35,
+      "ParamEyeROpen": 0.35,
+      "ParamMouthOpenY": 0.1,
+      "ParamMouthForm": -0.1,
+      "ParamBrowLForm": 0.2,
+      "ParamBrowRForm": 0.2
+    },
+
+    "tsundere": {
+      "ParamCheek": -0.7,
+      "ParamMouthForm": 0.4,
+      "ParamEyeLSmile": 0.2,
+      "ParamEyeRSmile": 0.2,
+      "ParamEyeBallX": 0.4,
+      "ParamEyeBallY": 0.1,
+      "ParamBrowLForm": 0.1,
+      "ParamBrowRForm": 0.3
+    }
+  },
+
+  "actions": {
+    "_description": "一次性动作，以身体和头部动作为主，手臂仅极微小自然摆动，播完回到当前表情",
+
+    "nod": {
+      "duration": 0.8,
+      "sequence": [
+        {"time": 0.0, "ParamAngleY": 0.0},
+        {"time": 0.2, "ParamAngleY": 8.0},
+        {"time": 0.4, "ParamAngleY": -2.0},
+        {"time": 0.6, "ParamAngleY": 4.0},
+        {"time": 0.8, "ParamAngleY": 0.0}
+      ]
+    },
+
+    "shake_head": {
+      "duration": 0.8,
+      "sequence": [
+        {"time": 0.0, "ParamAngleZ": 0.0},
+        {"time": 0.15, "ParamAngleZ": -12.0},
+        {"time": 0.35, "ParamAngleZ": 12.0},
+        {"time": 0.55, "ParamAngleZ": -8.0},
+        {"time": 0.8, "ParamAngleZ": 0.0}
+      ]
+    },
+
+    "tilt_head": {
+      "duration": 1.5,
+      "sequence": [
+        {"time": 0.0, "ParamAngleZ": 0.0},
+        {"time": 0.2, "ParamAngleZ": 15.0},
+        {"time": 1.0, "ParamAngleZ": 15.0},
+        {"time": 1.3, "ParamAngleZ": 3.0},
+        {"time": 1.5, "ParamAngleZ": 0.0}
+      ]
+    },
+
+    "bow": {
+      "_comment": "鞠躬 - 身体前倾 + 头部低下，利用身体角度Y和位置Z模拟",
+      "duration": 2.0,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0, "ParamFacePositionZ": 0.0},
+        {"time": 0.4, "ParamBodyAngleY": 8.0, "ParamAngleY": 20.0, "ParamFacePositionZ": 1.5},
+        {"time": 1.2, "ParamBodyAngleY": 8.0, "ParamAngleY": 20.0, "ParamFacePositionZ": 1.5},
+        {"time": 1.6, "ParamBodyAngleY": 2.0, "ParamAngleY": 5.0, "ParamFacePositionZ": 0.5},
+        {"time": 2.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0, "ParamFacePositionZ": 0.0}
+      ]
+    },
+
+    "wave": {
+      "_comment": "挥手替代：身体左右微摆 + 头部转向，手臂仅微微自然摆动（不抬手）",
+      "duration": 2.0,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleZ": 0.0, "ParamAngleX": 0.0, "ParamArmRA": 0.0},
+        {"time": 0.3, "ParamBodyAngleZ": 5.0, "ParamAngleX": -8.0, "ParamArmRA": 1.5},
+        {"time": 0.7, "ParamBodyAngleZ": -4.0, "ParamAngleX": 5.0, "ParamArmRA": -0.5},
+        {"time": 1.1, "ParamBodyAngleZ": 4.0, "ParamAngleX": -6.0, "ParamArmRA": 1.0},
+        {"time": 1.5, "ParamBodyAngleZ": -3.0, "ParamAngleX": 3.0, "ParamArmRA": -0.5},
+        {"time": 2.0, "ParamBodyAngleZ": 0.0, "ParamAngleX": 0.0, "ParamArmRA": 0.0}
+      ]
+    },
+
+    "heart": {
+      "_comment": "比心替代：身体微前倾 + 歪头 + 脸红 + 微笑，无手臂动作",
+      "duration": 2.0,
+      "sequence": [
+        {"time": 0.0, "ParamFacePositionZ": 0.0, "ParamAngleZ": 0.0, "ParamCheek": 0.0, "ParamMouthForm": 0.0},
+        {"time": 0.3, "ParamFacePositionZ": 1.0, "ParamAngleZ": -6.0, "ParamCheek": -0.7, "ParamMouthForm": 0.7},
+        {"time": 1.3, "ParamFacePositionZ": 1.0, "ParamAngleZ": -6.0, "ParamCheek": -0.7, "ParamMouthForm": 0.7},
+        {"time": 1.7, "ParamFacePositionZ": 0.3, "ParamAngleZ": -2.0, "ParamCheek": -0.2, "ParamMouthForm": 0.3},
+        {"time": 2.0, "ParamFacePositionZ": 0.0, "ParamAngleZ": 0.0, "ParamCheek": 0.0, "ParamMouthForm": 0.0}
+      ]
+    },
+
+    "clap": {
+      "_comment": "鼓掌替代：身体前后微动 + 点头，模拟拍手节奏",
+      "duration": 1.5,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0},
+        {"time": 0.3, "ParamBodyAngleY": -3.0, "ParamAngleY": 5.0},
+        {"time": 0.5, "ParamBodyAngleY": 3.0, "ParamAngleY": -3.0},
+        {"time": 0.7, "ParamBodyAngleY": -3.0, "ParamAngleY": 5.0},
+        {"time": 0.9, "ParamBodyAngleY": 3.0, "ParamAngleY": -3.0},
+        {"time": 1.1, "ParamBodyAngleY": -2.0, "ParamAngleY": 2.0},
+        {"time": 1.5, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0}
+      ]
+    },
+
+    "facepalm": {
+      "_comment": "扶额替代：头部低下 + 身体微前倾 + 闭眼",
+      "duration": 2.5,
+      "sequence": [
+        {"time": 0.0, "ParamAngleY": 0.0, "ParamBodyAngleY": 0.0, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0},
+        {"time": 0.4, "ParamAngleY": 15.0, "ParamBodyAngleY": 5.0},
+        {"time": 0.6, "ParamAngleY": 20.0, "ParamBodyAngleY": 7.0, "ParamEyeLOpen": 0.2, "ParamEyeROpen": 0.2},
+        {"time": 1.5, "ParamAngleY": 20.0, "ParamBodyAngleY": 7.0, "ParamEyeLOpen": 0.2, "ParamEyeROpen": 0.2},
+        {"time": 2.0, "ParamAngleY": 8.0, "ParamBodyAngleY": 3.0, "ParamEyeLOpen": 0.8, "ParamEyeROpen": 0.8},
+        {"time": 2.5, "ParamAngleY": 0.0, "ParamBodyAngleY": 0.0, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0}
+      ]
+    },
+
+    "shrug": {
+      "_comment": "耸肩替代：身体左右微摆 + 歪头，手臂仅微动",
+      "duration": 1.5,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0},
+        {"time": 0.3, "ParamBodyAngleZ": -4.0, "ParamAngleZ": -6.0, "ParamArmLA": 1.0, "ParamArmRA": 1.0},
+        {"time": 0.9, "ParamBodyAngleZ": -4.0, "ParamAngleZ": -6.0, "ParamArmLA": 1.0, "ParamArmRA": 1.0},
+        {"time": 1.5, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0}
+      ]
+    },
+
+    "point": {
+      "_comment": "指向替代：身体转向一侧 + 头部转向 + 视线跟随",
+      "duration": 1.5,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleX": 0.0, "ParamAngleX": 0.0, "ParamEyeBallX": 0.0},
+        {"time": 0.25, "ParamBodyAngleX": -6.0, "ParamAngleX": -15.0, "ParamEyeBallX": -0.5},
+        {"time": 0.9, "ParamBodyAngleX": -6.0, "ParamAngleX": -15.0, "ParamEyeBallX": -0.5},
+        {"time": 1.5, "ParamBodyAngleX": 0.0, "ParamAngleX": 0.0, "ParamEyeBallX": 0.0}
+      ]
+    },
+
+    "cry": {
+      "_comment": "哭泣替代：身体微颤（Z轴小幅度高频摆动）+ 低头 + 悲伤表情",
+      "duration": 3.0,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleZ": 0.0, "ParamAngleY": 0.0, "ParamMouthForm": 0.0},
+        {"time": 0.3, "ParamAngleY": 8.0, "ParamMouthForm": -0.5, "ParamCheek": -0.3},
+        {"time": 0.6, "ParamBodyAngleZ": 1.0},
+        {"time": 0.9, "ParamBodyAngleZ": -1.0},
+        {"time": 1.2, "ParamBodyAngleZ": 1.0},
+        {"time": 1.6, "ParamBodyAngleZ": -1.0},
+        {"time": 2.0, "ParamBodyAngleZ": 0.5},
+        {"time": 2.5, "ParamAngleY": 3.0, "ParamMouthForm": -0.2},
+        {"time": 3.0, "ParamBodyAngleZ": 0.0, "ParamAngleY": 0.0, "ParamMouthForm": 0.0, "ParamCheek": 0.0}
+      ]
+    },
+
+    "thumbs_up": {
+      "_comment": "点赞替代：身体后仰 + 点头 + 身体向上微移（跳跃感）",
+      "duration": 1.5,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0, "ParamFacePositionY": 0.0},
+        {"time": 0.2, "ParamBodyAngleY": -4.0, "ParamAngleY": -5.0, "ParamFacePositionY": 1.5},
+        {"time": 0.5, "ParamBodyAngleY": -2.0, "ParamAngleY": -5.0, "ParamFacePositionY": 1.5},
+        {"time": 1.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0, "ParamFacePositionY": 0.3},
+        {"time": 1.5, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0, "ParamFacePositionY": 0.0}
+      ]
+    },
+
+    "think": {
+      "_comment": "思考替代：歪头 + 身体微前倾 + 眼睛向上看",
+      "duration": 3.0,
+      "sequence": [
+        {"time": 0.0, "ParamAngleZ": 0.0, "ParamFacePositionZ": 0.0, "ParamEyeBallY": 0.0},
+        {"time": 0.3, "ParamAngleZ": 10.0, "ParamFacePositionZ": 0.8, "ParamEyeBallY": 0.5},
+        {"time": 2.0, "ParamAngleZ": 10.0, "ParamFacePositionZ": 0.8, "ParamEyeBallY": 0.5},
+        {"time": 2.5, "ParamAngleZ": 3.0, "ParamFacePositionZ": 0.2, "ParamEyeBallY": 0.1},
+        {"time": 3.0, "ParamAngleZ": 0.0, "ParamFacePositionZ": 0.0, "ParamEyeBallY": 0.0}
+      ]
+    },
+
+    "greeting_bow": {
+      "_comment": "轻鞠躬问好：小幅度鞠躬 + 微笑",
+      "duration": 1.5,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0},
+        {"time": 0.3, "ParamBodyAngleY": 5.0, "ParamAngleY": 12.0},
+        {"time": 0.8, "ParamBodyAngleY": 5.0, "ParamAngleY": 12.0},
+        {"time": 1.2, "ParamBodyAngleY": 1.0, "ParamAngleY": 3.0},
+        {"time": 1.5, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0}
+      ]
+    }
+  },
+
+  "dance_moves": {
+    "_description": "舞蹈动作片段，以身体摇摆、位移和头部摆动为主，手臂仅极微自然摆动",
+
+    "body_bounce": {
+      "_comment": "身体上下弹跳 + 头部轻微上下",
+      "duration": 0.5,
+      "loopable": true,
+      "sequence": [
+        {"time": 0.0, "ParamFacePositionY": 0.0, "ParamAngleY": 0.0},
+        {"time": 0.125, "ParamFacePositionY": -1.5, "ParamAngleY": -3.0},
+        {"time": 0.25, "ParamFacePositionY": -3.0, "ParamAngleY": -6.0},
+        {"time": 0.375, "ParamFacePositionY": -1.0, "ParamAngleY": -2.0},
+        {"time": 0.5, "ParamFacePositionY": 0.0, "ParamAngleY": 0.0}
+      ]
+    },
+
+    "body_sway": {
+      "_comment": "身体左右摇摆 + 头部同向摆动",
+      "duration": 1.0,
+      "loopable": true,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0},
+        {"time": 0.25, "ParamBodyAngleZ": -6.0, "ParamAngleZ": -10.0, "ParamArmLA": 1.0, "ParamArmRA": -1.0},
+        {"time": 0.5, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0},
+        {"time": 0.75, "ParamBodyAngleZ": 6.0, "ParamAngleZ": 10.0, "ParamArmLA": -1.0, "ParamArmRA": 1.0},
+        {"time": 1.0, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0}
+      ]
+    },
+
+    "hip_sway": {
+      "_comment": "扭胯：身体Z轴大幅度摆动 + 头部反向微动 + 手臂微摆",
+      "duration": 1.0,
+      "loopable": true,
+      "sequence": [
+        {"time": 0.0, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0},
+        {"time": 0.25, "ParamBodyAngleZ": -8.0, "ParamAngleZ": -4.0, "ParamArmLA": 1.5, "ParamArmRA": -1.5},
+        {"time": 0.5, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0},
+        {"time": 0.75, "ParamBodyAngleZ": 8.0, "ParamAngleZ": 4.0, "ParamArmLA": -1.5, "ParamArmRA": 1.5},
+        {"time": 1.0, "ParamBodyAngleZ": 0.0, "ParamAngleZ": 0.0, "ParamArmLA": 0.0, "ParamArmRA": 0.0}
+      ]
+    },
+
+    "spin_jump": {
+      "_comment": "旋转小跳：身体上移 + 身体旋转 + 头部旋转",
+      "duration": 2.0,
+      "loopable": false,
+      "sequence": [
+        {"time": 0.0, "ParamFacePositionY": 0.0, "ParamBodyAngleX": 0.0, "ParamAngleX": 0.0},
+        {"time": 0.3, "ParamFacePositionY": 3.0, "ParamBodyAngleX": 10.0, "ParamAngleX": 30.0},
+        {"time": 0.8, "ParamFacePositionY": 2.0, "ParamBodyAngleX": -10.0, "ParamAngleX": -30.0},
+        {"time": 1.3, "ParamFacePositionY": 1.0, "ParamBodyAngleX": 5.0, "ParamAngleX": 15.0},
+        {"time": 2.0, "ParamFacePositionY": 0.0, "ParamBodyAngleX": 0.0, "ParamAngleX": 0.0}
+      ]
+    },
+
+    "cheer_jump": {
+      "_comment": "欢呼跳跃：身体上移 + 后仰 + 头部后仰",
+      "duration": 0.8,
+      "loopable": false,
+      "sequence": [
+        {"time": 0.0, "ParamFacePositionY": 0.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0},
+        {"time": 0.15, "ParamFacePositionY": 2.0, "ParamBodyAngleY": -6.0, "ParamAngleY": -10.0},
+        {"time": 0.35, "ParamFacePositionY": 4.0, "ParamBodyAngleY": -8.0, "ParamAngleY": -15.0},
+        {"time": 0.55, "ParamFacePositionY": 1.5, "ParamBodyAngleY": -4.0, "ParamAngleY": -8.0},
+        {"time": 0.8, "ParamFacePositionY": 0.0, "ParamBodyAngleY": 0.0, "ParamAngleY": 0.0}
+      ]
+    },
+
+    "head_bob": {
+      "_comment": "点头律动：头部快速上下，配合轻微身体起伏",
+      "duration": 0.5,
+      "loopable": true,
+      "sequence": [
+        {"time": 0.0, "ParamAngleY": 0.0, "ParamBodyAngleY": 0.0},
+        {"time": 0.15, "ParamAngleY": -8.0, "ParamBodyAngleY": -2.0},
+        {"time": 0.3, "ParamAngleY": 4.0, "ParamBodyAngleY": 1.0},
+        {"time": 0.5, "ParamAngleY": 0.0, "ParamBodyAngleY": 0.0}
+      ]
+    }
+  },
+
+  "micro_actions": {
+    "_description": "微动作独立循环，始终叠加",
+
+    "blink": {
+      "_comment": "眨眼",
+      "duration": 0.25,
+      "trigger": "random_2_4_seconds",
+      "sequence": [
+        {"time": 0.0, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0},
+        {"time": 0.06, "ParamEyeLOpen": 0.1, "ParamEyeROpen": 0.1},
+        {"time": 0.12, "ParamEyeLOpen": 0.1, "ParamEyeROpen": 0.1},
+        {"time": 0.25, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0}
+      ]
+    },
+
+    "double_blink": {
+      "_comment": "双眨眼",
+      "duration": 0.5,
+      "trigger": "random_8_15_seconds",
+      "sequence": [
+        {"time": 0.0, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0},
+        {"time": 0.06, "ParamEyeLOpen": 0.1, "ParamEyeROpen": 0.1},
+        {"time": 0.12, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0},
+        {"time": 0.2, "ParamEyeLOpen": 0.1, "ParamEyeROpen": 0.1},
+        {"time": 0.26, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0},
+        {"time": 0.5, "ParamEyeLOpen": 1.0, "ParamEyeROpen": 1.0}
+      ]
+    },
+
+    "breath": {
+      "_comment": "呼吸（正弦发生器，这里仅作标识，实际代码用 sin 计算）",
+      "duration": 5.0,
+      "loopable": true,
+      "generator": "sin_wave",
+      "params": {
+        "ParamBodyAngleY": {"amplitude": 1.5, "frequency": 0.3},
+        "ParamAngleY": {"amplitude": 0.8, "frequency": 0.3}
+      }
+    },
+
+    "eye_dart": {
+      "_comment": "眼神游移",
+      "duration": 0.4,
+      "trigger": "random_3_8_seconds",
+      "sequence": [
+        {"time": 0.0, "ParamEyeBallX": 0.0, "ParamEyeBallY": 0.0},
+        {"time": 0.15, "ParamEyeBallX": 0.3, "ParamEyeBallY": 0.1},
+        {"time": 0.4, "ParamEyeBallX": 0.0, "ParamEyeBallY": 0.0}
+      ]
+    },
+
+    "lip_lick": {
+      "_comment": "舔嘴唇",
+      "duration": 0.3,
+      "trigger": "random_10_20_seconds",
+      "sequence": [
+        {"time": 0.0, "ParamMouthOpenY": 0.0},
+        {"time": 0.08, "ParamMouthOpenY": 0.15},
+        {"time": 0.2, "ParamMouthOpenY": 0.05},
+        {"time": 0.3, "ParamMouthOpenY": 0.0}
+      ]
+    }
+  },
+
+  "combo_presets": {
+    "_description": "常用表情+动作组合",
+
+    "greeting": {
+      "emotion": "happy",
+      "action": "greeting_bow",
+      "duration_override": 1.8,
+      "additional_params": {"ParamCheek": -0.2}
+    },
+
+    "goodbye": {
+      "emotion": "happy",
+      "action": "wave",
+      "duration_override": 2.5,
+      "additional_params": {"ParamMouthForm": 0.6}
+    },
+
+    "thanks_gift": {
+      "emotion": "very_happy",
+      "action": "heart",
+      "duration_override": 2.5,
+      "additional_params": {"ParamCheek": -0.8, "ParamEyeLSmile": 0.7, "ParamEyeRSmile": 0.7}
+    },
+
+    "shy_reaction": {
+      "emotion": "shy",
+      "action": "tilt_head",
+      "duration_override": 2.0,
+      "additional_params": {"ParamCheek": -0.9, "ParamEyeBallX": 0.4}
+    },
+
+    "angry_retort": {
+      "emotion": "angry",
+      "action": "shake_head",
+      "duration_override": 1.0,
+      "additional_params": {"ParamEyeLOpen": 1.15, "ParamEyeROpen": 1.15}
+    },
+
+    "confused_reaction": {
+      "emotion": "confused",
+      "action": "think",
+      "duration_override": 2.5
+    }
+  }
+}
