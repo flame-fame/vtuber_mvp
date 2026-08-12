@@ -9,7 +9,7 @@
     "ParamCheek": "BrowLeftY",        
 
     "ParamMouthForm": "MouthSmile",        
-    "ParamMouthOpenY": "VoiceVolumePluseMouthOpen",           
+    "ParamMouthOpenY": "VoiceVolumePlusMouthOpen",           
 
     "ParamEyeLOpen": "EyeOpenLeft",
     "ParamEyeROpen": "EyeOpenRight",
@@ -18,8 +18,8 @@
     "ParamEyeBallX": "EyeLeftX",
     "ParamEyeBallY": "EyeLeftY",
 
-    "ParamBrowLForm": "Brow",
-    "ParamBrowRForm": "Brow",
+    "ParamBrowLForm": "Brows",
+    "ParamBrowRForm": "Brows",
 
     "ParamBodyAngleX": "HandLeftPositionX",
     "ParamBodyAngleY": "HandLeftPositionY",

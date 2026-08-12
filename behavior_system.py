@@ -1,9 +1,3 @@
-"""
-Live2D VTubeStudio 行为/动作决策系统（完整可用版）
-包含：音频驱动、关键词驱动、标记驱动、意图驱动 四层协同
-状态机：idle, banter, storytelling, consoling, moderating, sing, dance
-所有参数映射基于 live2d_param_mapping.json
-"""
 import json
 import time
 import re
@@ -42,21 +36,6 @@ class Live2DParams:
     ParamArmRA: float = 0.0
 
 @dataclass
-class EmotionState:
-    """持续情绪表达（用于混合表情）"""
-    valence: float = 0.0     # 正面/负面 -1..1
-    arousal: float = 0.0     # 激动/平静 0..1
-    dominance: float = 0.5   # 掌控/顺从 0..1
-
-@dataclass
-class IntentState:
-    """Layer 4 输出的高层意图"""
-    valence: float = 0.0
-    arousal: float = 0.5
-    dominance: float = 0.5
-    social_mode: str = "neutral"
-
-@dataclass
 class ActionRequest:
     """统一动作请求"""
     action_id: str
@@ -68,18 +47,9 @@ class ActionRequest:
     animation_name: Optional[str] = None
     emotion_blend: Optional[EmotionState] = None
     cooldown_group: Optional[str] = None
-    # 可用于传递序列动画（如舞蹈、动作）
+    # 可用于传递序列动画
     sequence: Optional[List[Dict]] = None
 
-# ========================= 状态机定义 =========================
-class SystemMode(Enum):
-    IDLE = auto()
-    BANTER = auto()           # 闲聊
-    STORYTELLING = auto()     # 讲故事
-    CONSOLING = auto()        # 安慰
-    MODERATING = auto()       # 主持/控场
-    SING = auto()             # 唱歌（口型同步 + 律动）
-    DANCE = auto()            # 跳舞（节拍驱动或时间线）
 
 # ========================= 动作库（加载 JSON 映射） =========================
 class ActionLibrary:
@@ -90,9 +60,6 @@ class ActionLibrary:
             self.data = json.load(f)
         self.expressions = self.data["expressions"]
         self.actions = self.data["actions"]
-        self.dance_moves = self.data["dance_moves"]
-        self.micro_actions = self.data["micro_actions"]
-        self.combo_presets = self.data["combo_presets"]
 
     def get_expression_params(self, name: str) -> Dict[str, float]:
         """获取表情的静态参数（用于情绪混合）"""
@@ -109,89 +76,6 @@ class ActionLibrary:
             return act["duration"], act["sequence"]
         return 0.0, []
 
-    def get_dance_move(self, name: str) -> Tuple[float, bool, List[Dict]]:
-        """返回舞蹈动作的时长、是否可循环、关键帧序列"""
-        move = self.dance_moves.get(name)
-        if move:
-            return move["duration"], move.get("loopable", False), move["sequence"]
-        return 0.0, False, []
-
-    def get_micro_sequence(self, name: str) -> List[Dict]:
-        """返回微动作的关键帧序列"""
-        micro = self.micro_actions.get(name)
-        if micro and "sequence" in micro:
-            return micro["sequence"]
-        return []
-
-# ========================= 微动作独立循环 =========================
-class MicroActionLoop:
-    """永远在后台运行的微动作（眨眼、呼吸、眼神游移等）"""
-    def __init__(self):
-        self.blink_timer = random.uniform(2.0, 4.0)
-        self.blink_state = 0.0          # 0=睁眼, 1=闭眼
-        self.blink_phase = 0.0          # 0-1 用于非等速眨眼
-        self.breath_phase = 0.0
-        self.eye_gaze_timer = 0.0
-        self.gaze_x = 0.0
-        self.gaze_y = 0.0
-        self.lip_lick_timer = random.uniform(10.0, 20.0)
-        self.double_blink_timer = random.uniform(8.0, 15.0)
-        self._init_double_blink = False
-
-    def get_params(self, dt: float) -> Dict[str, float]:
-        """返回当前帧的微动作参数叠加值"""
-        params = {}
-        # 呼吸（正弦波，4-6秒周期）
-        self.breath_phase += dt * 1.2
-        breath_body_y = math.sin(self.breath_phase) * 1.2
-        breath_head_y = math.sin(self.breath_phase + 0.3) * 0.6
-        params["ParamBodyAngleY"] = breath_body_y
-        params["ParamAngleY"] = params.get("ParamAngleY", 0.0) + breath_head_y
-
-        # 眨眼逻辑
-        self.blink_timer -= dt
-        if self.blink_timer <= 0:
-            self.blink_state = 1.0   # 开始闭眼
-            self.blink_timer = 0.08  # 闭眼持续时间
-            self.blink_phase = 0.0
-        elif self.blink_state > 0:
-            # 睁眼过程（非等速，慢-快-慢 可通过缓动实现，这里简化线性）
-            self.blink_phase += dt * 12.0
-            self.blink_state = 1.0 - min(1.0, self.blink_phase)
-            if self.blink_state <= 0:
-                self.blink_state = 0.0
-                self.blink_timer = random.uniform(2.0, 4.0)
-        params["ParamEyeLOpen"] = 1.0 - self.blink_state * 0.9
-        params["ParamEyeROpen"] = 1.0 - self.blink_state * 0.9
-
-        # 双眨眼（偶尔触发）
-        self.double_blink_timer -= dt
-        if self.double_blink_timer <= 0 and not self._init_double_blink:
-            self._init_double_blink = True
-            self.double_blink_timer = 0.5
-            self.blink_timer = 0.01  # 强制立刻眨眼
-        elif self._init_double_blink and self.blink_state <= 0:
-            # 第一次眨眼结束后快速再眨一次
-            self.blink_timer = 0.01
-            self._init_double_blink = False
-            self.double_blink_timer = random.uniform(8.0, 15.0)
-
-        # 眼神游移
-        self.eye_gaze_timer -= dt
-        if self.eye_gaze_timer <= 0:
-            self.gaze_x = random.uniform(-0.3, 0.3)
-            self.gaze_y = random.uniform(-0.2, 0.2)
-            self.eye_gaze_timer = random.uniform(3.0, 8.0)
-        params["ParamEyeBallX"] = self.gaze_x
-        params["ParamEyeBallY"] = self.gaze_y
-
-        # 舔嘴唇（偶尔触发）
-        self.lip_lick_timer -= dt
-        if self.lip_lick_timer <= 0:
-            params["ParamMouthOpenY"] = 0.12  # 微张
-            self.lip_lick_timer = random.uniform(10.0, 20.0)
-        return params
-
 # ========================= 各层信号收集器 =========================
 class AudioDrivenLayer:
     """Layer 1：音频驱动口型、身体浮动、头部倾斜"""
@@ -204,7 +88,7 @@ class AudioDrivenLayer:
         reqs = []
         self.last_rms = audio_rms
         # 口型同步（不生成 ActionRequest，直接在系统里用 audio_rms 驱动）
-        # 身体浮动：根据振幅添加微小的动作请求（与呼吸叠加，此处轻量）
+        # 身体浮动：根据振幅添加微小的动作请求
         if audio_rms > 0.02:
             bob = min(audio_rms * 0.8, 2.0)
             reqs.append(ActionRequest(
@@ -413,8 +297,7 @@ class BehaviorSystem:
                audio_pitch: float = 150.0,
                current_text: str = "",
                llm_markup: Optional[dict] = None,
-               llm_intent: Optional[IntentState] = None,
-               beat_strength: float = 0.0) -> Live2DParams:
+               llm_intent: Optional[IntentState] = None) -> Live2DParams:
         """每帧调用，返回当前模型参数"""
         # 如果传入 None，则使用缓存值
         if llm_markup is None:
@@ -425,15 +308,9 @@ class BehaviorSystem:
         now = time.time()
         self.delta_time = now - self.last_time
         self.last_time = now
-
-        # 根据当前模式收集动作请求
-        if self.mode == SystemMode.DANCE:
-            self._update_dance(now, beat_strength)
-        elif self.mode == SystemMode.SING:
-            self._update_sing(now, audio_rms, audio_pitch, beat_strength)
-        else:
-            # 通用社交模式，调用四层收集
-            self._collect_requests(now, audio_rms, audio_pitch, current_text,
+       
+        # 通用社交模式，调用四层收集
+        self._collect_requests(now, audio_rms, audio_pitch, current_text,
                                    llm_markup, llm_intent)
 
         # 优先级仲裁
@@ -441,16 +318,6 @@ class BehaviorSystem:
 
         # 混合参数生成目标
         self.target_params = self._blend_params(now)
-
-        # 叠加微动作（权重可能受模式影响）
-        micro_weight = 1.0
-        if self.mode == SystemMode.DANCE:
-            micro_weight = 0.3  # 跳舞时微动作降低，避免眨眼太频繁
-        micro_params = self.micro_loop.get_params(self.delta_time)
-        self.target_params = self._merge_micro(micro_params, self.target_params, micro_weight)
-
-        # 口型同步：始终由音频驱动（优先级最高）
-        self.target_params.ParamMouthOpenY = min(audio_rms * 1.5, 1.0)
 
         # 平滑过渡
         self._smooth_params()
@@ -493,58 +360,6 @@ class BehaviorSystem:
                 layer=4, priority=3, start_time=now, duration=0.5,
                 params_override={"ParamBodyAngleZ": sway}
             )])
-
-    # ===================== 表演模式：舞蹈 =====================
-    def _update_dance(self, now, beat_strength):
-        """节拍驱动或时间线舞蹈"""
-        # 清除大部分旧请求，只保留舞蹈相关
-        self.active_actions = [a for a in self.active_actions if a.layer == 0]
-        dance_data = self.mode_data.get("choreography")  # 预编排时间线
-        if dance_data:
-            elapsed = now - self.mode_start_time
-            params = self._sample_choreography(dance_data, elapsed)
-            if params:
-                self._add_requests([ActionRequest(
-                    action_id="dance_choreo",
-                    layer=5, priority=10, start_time=now, duration=0.1,
-                    params_override=params
-                )])
-        else:
-            # 节拍即兴舞蹈：每次强拍切换姿势
-            if beat_strength > 0.7 and self.dance_move_progress <= 0:
-                move_name = random.choice(["body_bounce", "body_sway", "arm_wave_both",
-                                           "arm_raise_single", "hip_sway"])
-                dur, loopable, seq = self.lib.get_dance_move(move_name)
-                if dur > 0:
-                    self.dance_current_move = {"name": move_name, "seq": seq, "dur": dur, "start": now}
-                    self.dance_move_progress = dur
-            if self.dance_move_progress > 0:
-                self.dance_move_progress -= self.delta_time
-                if self.dance_current_move:
-                    elapsed = now - self.dance_current_move["start"]
-                    params = self._sample_sequence(self.dance_current_move["seq"],
-                                                   elapsed, self.dance_current_move["dur"])
-                    self._add_requests([ActionRequest(
-                        action_id="dance_beat",
-                        layer=5, priority=10, start_time=now, duration=0.1,
-                        params_override=params
-                    )])
-
-    # ===================== 表演模式：唱歌 =====================
-    def _update_sing(self, now, rms, pitch, beat):
-        """唱歌：口型完全由音频驱动，身体随节拍律动，面部情绪由当前情绪决定"""
-        # 保留当前情绪（可能来自标记或意图）
-        # 身体律动跟随节拍
-        if beat > 0.6:
-            self._add_requests([ActionRequest(
-                action_id="sing_beat_sway",
-                layer=4, priority=6, start_time=now, duration=0.3,
-                params_override={
-                    "ParamBodyAngleZ": random.uniform(-3.0, 3.0),
-                    "ParamBodyAngleY": random.uniform(-2.0, 2.0)
-                }
-            )])
-        # 口型同步已在主循环中强制设置
 
     # ===================== 优先级仲裁 =====================
     def _arbitrate(self, now):
@@ -663,22 +478,6 @@ class BehaviorSystem:
             v1 = next_frame.get(key, 0.0)
             result[key] = v0 + (v1 - v0) * alpha
         return result
-
-    def _sample_choreography(self, timeline: List[Dict], elapsed: float) -> Dict[str, float]:
-        """预编排舞蹈时间线插值（与 _sample_sequence 类似）"""
-        return self._sample_sequence(timeline, elapsed, timeline[-1]["time"])
-
-    # ===================== 微动作叠加 =====================
-    def _merge_micro(self, micro: Dict[str, float], target: Live2DParams, weight: float) -> Live2DParams:
-        for k, v in micro.items():
-            if hasattr(target, k):
-                current = getattr(target, k)
-                # 眼睛开闭取更小值（闭眼优先），其他用加法叠加
-                if "Eye" in k and "Open" in k:
-                    setattr(target, k, min(current, v))
-                else:
-                    setattr(target, k, current + v * weight)
-        return target
 
     # ===================== 平滑过渡 =====================
     def _smooth_params(self):

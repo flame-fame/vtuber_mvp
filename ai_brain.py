@@ -14,8 +14,8 @@ class AIBrain:
         self.max_tokens = max_tokens
         self.conversation_history = []
         self.max_history = AI_CONFIG["max_history"]  
-        self.emotions_list = ["UnHappy", "Blush", "Smile", "Stunned", "BadSmile", "Woosh", "Dislike", "Sad", "Normal"]
-        self.actions_list = ["Agree", "Confused", "Disagree", "Shy", "Happy", "Neutral", "Blink", "Laugh", "Surprised", "LookDown"]
+        self.emotions_list = ["neutral", "happy", "very_happy", "sad", "angry", "surprised", "shy", "serious", "teasing", "bored", "confused", "disgusted", "excited", "pain", "sleepy", "tsundere"]
+        self.actions_list = ["nod", "shake_head", "tilt_head", "shrug", "laugh", "cry", "think", "body_bounce", "body_sway", "hip_sway", "spin_jump", "cheer_jump", "head_bob"]
         
     async def chat(self, user_input: str) -> Tuple[str, str, float]:
         """

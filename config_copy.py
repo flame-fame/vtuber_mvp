@@ -35,9 +35,9 @@ AI_CONFIG = {
         1. 回答必须简短，不超过50个汉字
         2. 语气要带点嘲讽，但偶尔流露出温柔
         3. **必须在回答末尾**附带一个表情标签和一个动作标签，格式严格为：`[表情:动作]`。
-   可用的表情标签：`[neutral]`、`[happy]`、`[very_happy]`、`[sad]`、`[angry]`、`[surprised]`、`[shy]`、`[serious]`、`[teasing]`、`[bored]`、`[confused]`、`[disgusted]`、`[excited]`、`[pain]`、`[sleepy]`、`[tsundere]`。
-   可用的动作标签：`[nod]`、`[shake_head]`、`[tilt_head]`、`[Shrug]`、`[laugh]`、`[cry]`、`[think]`、`[body_bounce]`、`[body_sway]`、`[hip_sway]`、`[spin_jump]`、`[cheer_jump]`、`[head_bob]`。
-   例如：`哼，本小姐才懒得理你呢。[teasing:body_sway]`、`你TM真是个人才！[surprised:laugh]`。
+   可用的表情标签：`[UnHappy]`、`[Blush]`、`[Smile]`、`[Stunned]`、`[BadSmile]`、`[Woosh]`、`[Dislike]`、`[Sad]`、`[Normal]`。
+   可用的动作标签：`[Agree]`、`[Confused]`、`[Disagree]`、`[Shy]`、`[Happy]`、`[Neutral]`、`[Blink]`、`[Laugh]`、`[Surprised]`、`[LookDown]`。
+   例如：`哼，本小姐才懒得理你呢。[WhiteEye:LookDown]`、`你TM真是个人才！[BadSmile:Happy]`。
    如果回答中没有标签，则视为无效回答，我会重新生成。
         """,
     "temperature": 0.85,          # 控制文本的随机性/创造性，0-1之间，0越确定，1越随机
@@ -53,3 +53,27 @@ TTS_CONFIG = {
     "rate": "+5%",
 }
 
+# ==================== 情绪→表情/动作映射 ====================
+# type: "expression" 或 "action"
+# resource: 表情文件名（不含.exp3.json后缀）或动作热键名称
+EMOTION_MAPPING = {
+    "Agree": {"type": "action", "resource": "Idle01"},      # 同意 → 动作
+    "Confused": {"type": "action", "resource": "Idle02"},      # 不理解 → 动作
+    "Disagree": {"type": "action", "resource": "Annoyed"},    # 不同意 → 动作
+    "Shy": {"type": "action", "resource": "Blushing"},      # 害羞 → 动作 3
+    "Happy": {"type": "action", "resource": "Smile"},   
+    "Neutral": {"type": "action", "resource": "Idle01"}, 
+    "Blink": {"type": "action", "resource": "Surprised"}, 
+    "Laugh": {"type": "action", "resource": "Proud"}, 
+    "Surprised": {"type": "action", "resource": "Surprised"}, 
+    "Sad": {"type": "action", "resource": "Sad"}, 
+    "UnHappy": {"type": "expression", "resource": "Angry"},  
+    "Sad": {"type": "expression", "resource": "Sad"},    
+    "Blush": {"type": "expression", "resource": "Blushing"},         
+    "Smile": {"type": "expression", "resource": "Smile"},       # 惊讶
+    "Stunned": {"type": "expression", "resource": "Stuned"},          # 伤心 → 表情
+    "Woosh": {"type": "expression", "resource": "Surprised"}, 
+    "BadSmile": {"type": "expression", "resource": "BadSmile"},  
+    "Dislike": {"type": "expression", "resource": "WhiteEye"},  
+    "Normal": {"type": "expression", "resource": "Normal"},      # 平静 → 无表情（或可改为"冷漠"）
+}

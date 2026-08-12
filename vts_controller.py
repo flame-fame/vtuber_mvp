@@ -382,3 +382,32 @@ class VTSController:
         return self.message_callbacks
     def get_response(self):
         return self.response_store
+
+    # ---------- 新增：参数映射与动画播放 ----------
+    def init_animation_system(self, live2d_path: str, face_path: str):
+        """初始化参数映射和动画系统"""
+        from parameter_mapper import ParameterMapper
+        from animation_player import AnimationPlayer
+        from action_scheduler import ActionScheduler
+        
+        self.mapper = ParameterMapper(live2d_path, face_path)
+        self.player = AnimationPlayer(self.mapper, self)
+        self.scheduler = ActionScheduler(self.player)
+        # 启动调度器（需要在异步环境中调用 start）
+        # 注意：此方法应在主循环的异步上下文中调用 start()
+        return self.scheduler
+    
+    def set_expression(self, expression_name: str):
+        """设置表情（同步）"""
+        if hasattr(self, 'player'):
+            self.player.set_expression(expression_name)
+        else:
+            print("⚠️ 动画系统未初始化")
+    
+    async def request_action(self, action_name: str, priority: int ):
+        """请求动作（异步）"""
+        if hasattr(self, 'scheduler'):
+            await self.scheduler.request_action(action_name, priority)
+        else:
+            print("⚠️ 动画系统未初始化")
+
