@@ -27,7 +27,7 @@ class AIVTuber:
     async def on_ai_response(self, emotion, action):
         self.vts.set_expression(emotion)      # 设置表情（持续）
         if action and action != "neutral":
-            await self.vts.request_action(action, ActionPriority.NORMAL.value)  # 动作  
+            await self.vts.request_action(action, 1)  # 动作  
 
     async def run(self):  
         """主循环"""
@@ -69,7 +69,7 @@ class AIVTuber:
                 reply_text, emotion, action = await self.brain.chat(user_input)
                 elapsed_time = time.time() - start_time
                 print(f"思考耗时: {elapsed_time:.4f} 秒")
-                mode = 1
+                mode = 2
                 if mode == 1:
                     try:
                         self.vts.activate_expression(emotion, active=True)
