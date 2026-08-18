@@ -19,8 +19,10 @@ class AIVTuber:
         )
         self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"])
         self.vts = VTSController()
+        self.vts.init_animation_system("live2d_param_mapping.json", "face_param_mapping.json")
         self.thread = None
         self.scheduler = None
+        self.tts.set_vts(self.vts, self.vts.player)  # 注入 VTS 和播放器
 
 
     # 在 AI 回复后调用：
@@ -85,7 +87,8 @@ class AIVTuber:
                     asyncio.create_task(self.vts.request_action(action, 1))
                     # 确保 TTS 引擎使用当前事件循环
                     self.tts.set_loop(asyncio.get_running_loop())
-                    await self.tts._speak_async(reply_text)
+                    # 语音播放同时用音频能量驱动动作
+                    self.tts.speak(reply_text)  # action 是标签
                    
             except Exception as e:
                 print(f"❌ 运行出错: {e}")
