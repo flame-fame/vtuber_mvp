@@ -73,7 +73,7 @@ class AIBrain:
         except Exception as e:
             # 打印错误信息  
             print(f"❌ AI 接口报错: {e}")
-            return "哼，本小姐现在不想说话！", "Normal", "Neutral"
+            return "哼，本小姐现在不想说话！", "neutral", "think"
     
     def _extract_emotion(self, text):
          # 先统一括号为半角
@@ -86,7 +86,7 @@ class AIBrain:
         for emo in self.emotions_list:
             if f"[{emo}]" in text:
                 return emo
-        return "Normal"
+        return "neutral"
     
     def _extract_action(self, text: str) -> str:
         """从文本中提取动作标签"""
@@ -99,7 +99,7 @@ class AIBrain:
         for action in self.actions_list:
             if f"[{action}]" in text or f"]:{action}" in text:
                 return action
-        return "Neutral"
+        return "think"
 
     def _extract_intensity(self, text: str) -> float:
         """从文本中提取强度值"""

@@ -20,12 +20,11 @@ class AIVTuber:
             temperature=AI_CONFIG["temperature"],
             max_tokens=AI_CONFIG["max_tokens"]
         )
-        self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"])
         self.vts = VTSController()
+        self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"], vts=self.vts)
         self.danmaku_reader = DanmakuReader("danmaku_live.txt")
         self.is_speaking = False
         self._loop = None
-
         # 2. 连接 VTS
         if not self.vts.connect():
             print("❌ 无法连接到 VTube Studio，请检查是否开启并配置了API。")
@@ -67,7 +66,7 @@ class AIVTuber:
             sys_reply_text = f"谢谢 {danmaku.username} 关注主播"
         elif danmaku.dtype == DmType.GIFT:
             user_input = f"{danmaku.username} 送了 {danmaku.content}"
-            sys_reply_text = f"谢谢 {danmaku.username} 宝宝的礼物，主播爱你哦！"
+            sys_reply_text = f"谢谢 {danmaku.username}宝宝的礼物，主播爱你哦！"
         elif danmaku.dtype == DmType.SC:
             user_input = f"{danmaku.username} 发送SC：{danmaku.content}"
         else:
@@ -97,16 +96,9 @@ class AIVTuber:
 
         # 2. 激活表情
         if emotion != "neutral":
-            self.vts.set_expression(emotion)
-            emotion_duration = 4
-            # 同步阻塞的代码，用Threading执行
-            threading.Timer(emotion_duration, lambda: self.vts.set_expression(emotion)).start()
+            asyncio.create_task(self.vts.set_expression(emotion, 2.0))
         else:
-            self.vts.set_expression("neutral")
-
-        # 3. 触发动作
-        if action != "think":
-            asyncio.create_task(self.vts.request_action(action, 1))
+            await self.vts.set_expression("neutral")
 
         # 4. 播放语音（异步等待完成）
         print("🔈 语音合成中...")

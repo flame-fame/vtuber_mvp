@@ -217,7 +217,7 @@ class VTSController:
         }
         try:
             self.ws.send(json.dumps(request))
-            print(f"✅ VTS - 发送请求成功: {request_id}:{data_payload}")
+            #print(f"✅ VTS - 发送请求成功: {request_id}:{data_payload}")
             return request_id
         except Exception as e:
             print(f"❌ VTS - 发送请求失败: {e}")
@@ -288,7 +288,7 @@ class VTSController:
                 "parameterValues": [{"id": param_id, "value": value}],
             },
         )
-        print(f"✅ VTS - 发送设置参数请求 {param_id} : {value}")
+        #print(f"✅ VTS - 发送设置参数请求 {param_id} : {value}")
 
     def set_parameters(self, parameters: Dict[str, float]):
         """
@@ -304,7 +304,7 @@ class VTSController:
         }
        
         self._send_request("InjectParameterDataRequest", req_body)
-        print(f"✅ VTS - 发送设置参数请求 {parameters}")
+        #print(f"✅ VTS - 发送设置参数请求 {parameters}")
 
     def activate_expression(
         self, expression_name: str, fade_time: float = 0.5, active: bool = True
@@ -397,10 +397,10 @@ class VTSController:
         # 注意：此方法应在主循环的异步上下文中调用 start()
         return self.scheduler
     
-    def set_expression(self, expression_name: str):
-        """设置表情（同步）"""
+    async def set_expression(self, expression_name: str, fade_time: float = 0.5):
+        """设置表情（异步）"""
         if hasattr(self, 'player'):
-            self.player.set_expression(expression_name)
+            await self.player.set_expression_smooth(expression_name, fade_time)
         else:
             print("⚠️ 动画系统未初始化")
     

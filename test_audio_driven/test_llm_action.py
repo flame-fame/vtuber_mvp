@@ -25,11 +25,11 @@ class AIVTuber:
         self.tts.set_vts(self.vts, self.vts.player)  # 注入 VTS 和播放器
 
 
-    # 在 AI 回复后调用：
-    async def on_ai_response(self, emotion, action):
-        self.vts.set_expression(emotion)      # 设置表情（持续）
-        if action and action != "neutral":
-            await self.vts.request_action(action, 1)  # 动作  
+        # 在 AI 回复后调用：
+        async def on_ai_response(self, emotion, action):
+            await self.vts.set_expression(emotion, fade_time=1.0)      # 设置表情（持续）
+            if action and action != "neutral":
+                await self.vts.request_action(action, 1)  # 动作  
 
     async def run(self):  
         """主循环"""
@@ -43,7 +43,7 @@ class AIVTuber:
             # 启动调度器（异步）
             asyncio.create_task(self.scheduler.start())
             # 设置初始表情
-            self.vts.set_expression("neutral")
+            await self.vts.set_expression("neutral", fade_time=0.5)
 
         print("\n--- 输入文字开始对话 (输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆) ---")
         while True:
@@ -82,13 +82,13 @@ class AIVTuber:
                         self.vts.activate_expression(emotion, active=False)
 
                 elif mode == 2:
+                    # 1. 设置表情
+                    await self.vts.set_expression(emotion, fade_time=1.0)
                     
-                    self.vts.set_expression(emotion)
-                    asyncio.create_task(self.vts.request_action(action, 1))
-                    # 确保 TTS 引擎使用当前事件循环
+                    # 3. 创建 TTS 任务（不等待，让它们并发执行）
                     self.tts.set_loop(asyncio.get_running_loop())
-                    # 语音播放同时用音频能量驱动动作
-                    self.tts.speak(reply_text)  # action 是标签
+                    await self.tts._speak_async(reply_text)
+                    
                    
             except Exception as e:
                 print(f"❌ 运行出错: {e}")

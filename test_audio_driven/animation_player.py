@@ -39,7 +39,36 @@ class AnimationPlayer:
         vts_params = self.mapper.to_vts_params(params)
         self.vts.set_parameters(vts_params)
         print(f"🎭 表情切换到: {expression_name}")
-    
+        
+    async def set_expression_smooth(self, expression_name: str, fade_time: float = 0.5) -> None:
+        """平滑过渡到新表情"""
+        target_params = self.mapper.get_expression_params(expression_name)
+        if not target_params:
+            print(f"⚠️ 未知表情: {expression_name}")
+            return
+        current_params = self.current_expression_params.copy()
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            elapsed = asyncio.get_event_loop().time() - start_time
+            if elapsed >= fade_time:
+                break
+            ratio = elapsed / fade_time
+            # 线性插值
+            interpolated = {}
+            for param, target_val in target_params.items():
+                current_val = current_params.get(param, 0.0)
+                interpolated[param] = current_val + (target_val - current_val) * ratio
+            # 注入
+            vts_params = self.mapper.to_vts_params(interpolated)
+            self.vts.set_parameters(vts_params)
+            await asyncio.sleep(0.05)
+        
+        # 最终设置
+        self.current_expression_name = expression_name
+        self.current_expression_params = target_params.copy()
+        vts_params = self.mapper.to_vts_params(target_params)
+        self.vts.set_parameters(vts_params)
+
     async def play_action(self, action_name: str) -> None:
         """
         异步播放一个动作。
