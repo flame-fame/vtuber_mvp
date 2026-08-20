@@ -36,11 +36,10 @@ class AnimationPlayer:
         self.current_expression_name = expression_name
         self.current_expression_params = params.copy()
         # 立即注入表情参数
-        vts_params = self.mapper.to_vts_params(params)
-        self.vts.set_parameters(vts_params)
+        self.set_expression_smooth(expression_name)
         print(f"🎭 表情切换到: {expression_name}")
         
-    async def set_expression_smooth(self, expression_name: str, fade_time: float = 0.5) -> None:
+    async def set_expression_smooth(self, expression_name: str, fade_time: float = 3) -> None:
         """平滑过渡到新表情"""
         target_params = self.mapper.get_expression_params(expression_name)
         if not target_params:
@@ -53,21 +52,23 @@ class AnimationPlayer:
             if elapsed >= fade_time:
                 break
             ratio = elapsed / fade_time
+            #缓动：先快后慢
+            eased_ratio = 1 - (1 - ratio) ** 2
             # 线性插值
             interpolated = {}
             for param, target_val in target_params.items():
                 current_val = current_params.get(param, 0.0)
-                interpolated[param] = current_val + (target_val - current_val) * ratio
+                interpolated[param] = current_val + (target_val - current_val) * eased_ratio
             # 注入
             vts_params = self.mapper.to_vts_params(interpolated)
             self.vts.set_parameters(vts_params)
-            await asyncio.sleep(0.05)
+
+            #更新频率：50fps
+            await asyncio.sleep(0.02)
         
         # 最终设置
         self.current_expression_name = expression_name
         self.current_expression_params = target_params.copy()
-        vts_params = self.mapper.to_vts_params(target_params)
-        self.vts.set_parameters(vts_params)
 
     async def play_action(self, action_name: str) -> None:
         """

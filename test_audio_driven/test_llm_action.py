@@ -82,12 +82,12 @@ class AIVTuber:
                         self.vts.activate_expression(emotion, active=False)
 
                 elif mode == 2:
-                    # 1. 设置表情
-                    await self.vts.set_expression(emotion, fade_time=1.0)
-                    
-                    # 3. 创建 TTS 任务（不等待，让它们并发执行）
-                    self.tts.set_loop(asyncio.get_running_loop())
-                    await self.tts._speak_async(reply_text)
+                        # 1. 设置表情
+                        self.vts.set_expression(emotion, fade_time=1.0)
+                        
+                        # 3. 创建 TTS 任务（不等待，让它们并发执行）
+                        self.tts.set_loop(asyncio.get_running_loop())
+                        await self.tts._speak_async(reply_text)
                     
                    
             except Exception as e:
