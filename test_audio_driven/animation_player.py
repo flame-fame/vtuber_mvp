@@ -25,6 +25,9 @@ class AnimationPlayer:
         self.current_expression_name = "neutral"
         self.current_expression_params = mapper.get_expression_params("neutral")
         self.current_actual_params = self.current_expression_params.copy()
+        self.bio_params = {}
+        self.action_params = {}
+
         # 高频更新任务
         self._bio_update_task: Optional[asyncio.Task] = None
         # 播放状态
@@ -55,17 +58,14 @@ class AnimationPlayer:
                     body_params.update(self.bio.update_breath(current_time))
                     body_params.update(self.bio.update_micro_movement(current_time))
                     bio_params.update(body_params)
-
-                # 合并到当前实际参数（只更新生物相关参数）
-                for param, value in bio_params.items():
-                    if param in self.current_actual_params:
-                        self.current_actual_params[param] = value
-                
-                # 立即发送到 VTS
-                vts_params = self.mapper.to_vts_params(self.current_actual_params)
-                self.vts.set_parameters(vts_params)
-                
-                await asyncio.sleep(0.05)  # 20fps 更新频率
+                # 合并到生物参数
+                self.bio_params = bio_params.copy()
+                # 与其他参数合并发送
+                self._send_merged_params()
+                # 打印调试信息
+                # print(f"👁️ 眼球: {self.bio_params.get('EyeBallX', 0):.3f}, {self.bio_params.get('EyeBallY', 0):.3f}")
+                # print(f"😉 眨眼状态: {'闭眼' if self.bio_params.get('EyeLOpen', 1) < 0.5 else '睁眼'}")
+                await asyncio.sleep(0.02)  # 50fps 更新频率
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -77,7 +77,7 @@ class AnimationPlayer:
         if not target_params:
             print(f"⚠️ 未知表情: {expression_name}")
             return
-        current_params = self.current_actual_params.copy()
+        current_params = self.current_expression_params.copy()
         start_time = asyncio.get_event_loop().time()
         while True:
             elapsed = asyncio.get_event_loop().time() - start_time
@@ -89,18 +89,34 @@ class AnimationPlayer:
             # 线性插值
             interpolated = {}
             for param, target_val in target_params.items():
-                if param in ["ParamEyeBallX", "ParamEyeBallY"]:
-                    continue
                 current_val = current_params.get(param, 0.0)
                 interpolated[param] = current_val + (target_val - current_val) * eased_ratio
-            # 注入
-            vts_params = self.mapper.to_vts_params(interpolated)
-            self.vts.set_parameters(vts_params)
             # 每帧更新当前表情参数（如果表情提前终结导致目标参数T未达到，以实际参数A作为当前参数，避免以T作为下一个表情切换的起始状态）
-            self.current_actual_params = interpolated.copy()
-            # 模拟人的表情更新频率：20fps
-            await asyncio.sleep(0.05)
+            self.current_expression_params = interpolated.copy()
+            # 与其他参数合并发送
+            self._send_merged_params()
+            # 模拟人的表情更新频率：10fps
+            await asyncio.sleep(0.1)
         
         # 最终设置(如果表情播放完了未被提前终结)
         self.current_expression_name = expression_name
-        self.current_actual_params = target_params.copy()
+        self.current_expression_params = target_params.copy()
+
+    def _send_merged_params(self):
+        """合并所有参数并发送给 VTS"""
+        # 1. 从基础表情复制
+        merged = self.current_expression_params.copy()
+        
+        # 2. 叠加生物参数（不覆盖表情参数）
+        for param, value in self.bio_params.items():
+            if param not in merged:  # 如果表情里没有这个参数，才添加
+                merged[param] = value
+            # 如果表情里有，不覆盖（保持表情优先）
+        
+        # 3. 叠加动作参数（覆盖表情和生物）
+        for param, value in self.action_params.items():
+            merged[param] = value  # 动作优先级最高
+        
+        # 4. 发送到 VTS
+        vts_params = self.mapper.to_vts_params(merged)
+        self.vts.set_parameters(vts_params)
