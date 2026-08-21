@@ -27,46 +27,55 @@
     },
 
     "happy": {
-      "ParamMouthForm": 0.8,
-      "ParamCheek": -0.3,
-      "ParamEyeLSmile": 0.5,
-      "ParamEyeRSmile": 0.5,
-      "ParamBrowLForm": 0.3,
-      "ParamBrowRForm": 0.3
-    },
-
-    "very_happy": {
-      "ParamMouthForm": 1.0,
-      "ParamMouthOpenY": 0.6,
-      "ParamCheek": -0.6,
+      "ParamMouthForm": 0.5,
+      "ParamCheek": -0.5,
       "ParamEyeLSmile": 0.8,
       "ParamEyeRSmile": 0.8,
-      "ParamEyeLOpen": 0.6,
-      "ParamEyeROpen": 0.6,
+      "ParamEyeLOpen": 0.3,
+      "ParamEyeROpen": 0.3,
       "ParamBrowLForm": 0.5,
       "ParamBrowRForm": 0.5
     },
 
+    "very_happy": {
+      "ParamMouthForm": 1.0,
+      "ParamCheek": 0.0,
+      "ParamEyeLSmile": 1.0,
+      "ParamEyeRSmile": 1.0,
+      "ParamEyeLOpen": 0.0,
+      "ParamEyeROpen": 0.0,
+      "ParamBrowLForm": 1.0,
+      "ParamBrowRForm": 1.0
+    },
+
     "sad": {
-      "ParamMouthForm": -0.5,
-      "ParamBrowLForm": -0.6,
-      "ParamBrowRForm": -0.6,
-      "ParamEyeLOpen": 0.7,
-      "ParamEyeROpen": 0.7,
+      "ParamMouthForm": -1.0,
+      "ParamBrowLForm": -1.0,
+      "ParamBrowRForm": -1.0,
+      "ParamEyeLOpen": 0.0,
+      "ParamEyeROpen": 0.0,
+      "ParamEyeLSmile": 0.0,
+      "ParamEyeRSmile": 0.0,
       "ParamCheek": -0.1
     },
 
     "angry": {
-      "ParamMouthForm": -0.6,
-      "ParamBrowLForm": 0.8,
-      "ParamBrowRForm": 0.8,
-      "ParamEyeLOpen": 1.1,
-      "ParamEyeROpen": 1.1,
-      "ParamCheek": -0.3
+      "ParamMouthForm": -0.9,
+      "ParamBrowLForm": -0.8,
+      "ParamBrowRForm": -0.8,
+      "ParamEyeLSmile": 0.0,
+      "ParamEyeRSmile": 0.0,
+      "ParamEyeLOpen": 0.3,
+      "ParamEyeROpen": 0.3,
+      "ParamEyeBallX": 0.3,
+      "ParamEyeBallY": 0.4,
+      "ParamCheek": -0.9,
+      "ParamAngleX": 30.0,
+      "ParamAngleY": 30.0,
+      "ParamBodyAngleX": 10.0
     },
 
     "surprised": {
-      "ParamMouthOpenY": 0.8,
       "ParamMouthForm": 0.2,
       "ParamBrowLForm": -0.7,
       "ParamBrowRForm": -0.7,
@@ -76,13 +85,15 @@
 
     "shy": {
       "ParamMouthForm": 0.3,
-      "ParamCheek": -0.8,
-      "ParamEyeLSmile": 0.3,
-      "ParamEyeRSmile": 0.3,
-      "ParamEyeLOpen": 0.8,
-      "ParamEyeROpen": 0.8,
-      "ParamEyeBallX": 0.3,
-      "ParamEyeBallY": -0.2
+      "ParamCheek": 0.0,
+      "ParamEyeLSmile": 0.9,
+      "ParamEyeRSmile": 0.9,
+      "ParamEyeLOpen": 0.5,
+      "ParamEyeROpen": 0.5,
+      "ParamEyeBallX": -0.9,
+      "ParamEyeBallY": -0.9,
+      "ParamBrowLForm": 0.9,
+      "ParamBrowRForm": 0.9
     },
 
     "serious": {
@@ -94,48 +105,56 @@
     },
 
     "teasing": {
-      "ParamMouthForm": 0.6,
-      "ParamEyeLSmile": 0.4,
-      "ParamEyeRSmile": 0.6,
-      "ParamBrowLForm": 0.2,
-      "ParamBrowRForm": 0.1,
+      "ParamMouthForm": 0.9,
+      "ParamEyeLSmile": 0.9,
+      "ParamEyeRSmile": 0.9,
+      "ParamBrowLForm": 0.9,
+      "ParamBrowRForm": 0.9,
+      "ParamEyeLOpen": 0.5,
+      "ParamEyeROpen": 0.5,
+      "ParamEyeBallX": 0.3,
+      "ParamEyeBallY": -1.0,
       "ParamCheek": -0.2
     },
 
     "bored": {
       "ParamEyeLOpen": 0.5,
       "ParamEyeROpen": 0.5,
-      "ParamMouthOpenY": 0.15,
-      "ParamMouthForm": -0.1,
+      "ParamMouthForm": -1.0,
+      "ParamEyeLSmile": 0.0,
+      "ParamEyeRSmile": 0.0,
+      "ParamEyeBallX": 0.0,
+      "ParamEyeBallY": 1.0,
       "ParamBrowLForm": 0.1,
-      "ParamBrowRForm": 0.1
+      "ParamBrowRForm": 0.1,
+      "ParamCheek": -0.8
     },
 
     "confused": {
-      "ParamBrowLForm": -0.4,
-      "ParamBrowRForm": 0.5,
+      "ParamBrowLForm": -0.9,
+      "ParamBrowRForm": -0.9,
       "ParamMouthForm": -0.2,
-      "ParamMouthOpenY": 0.1,
       "ParamEyeBallX": -0.3,
       "ParamEyeBallY": 0.2,
+      "ParamEyeLSmile": 0.0,
+      "ParamEyeRSmile": 0.0,
       "ParamEyeLOpen": 1.0,
-      "ParamEyeROpen": 0.9
+      "ParamEyeROpen": 1.0
     },
 
     "disgusted": {
       "ParamMouthForm": -0.7,
-      "ParamBrowLForm": 0.9,
-      "ParamBrowRForm": 0.9,
-      "ParamEyeLOpen": 0.7,
-      "ParamEyeROpen": 0.7
+      "ParamBrowLForm": 0.1,
+      "ParamBrowRForm": 0.1,
+      "ParamEyeLOpen": 0.5,
+      "ParamEyeROpen": 0.5
     },
 
     "excited": {
       "ParamMouthForm": 0.9,
-      "ParamMouthOpenY": 0.3,
-      "ParamCheek": -0.5,
-      "ParamBrowLForm": -0.5,
-      "ParamBrowRForm": -0.5,
+      "ParamCheek": -0.1,
+      "ParamBrowLForm": 0.5,
+      "ParamBrowRForm": 0.5,
       "ParamEyeLOpen": 1.15,
       "ParamEyeROpen": 1.15,
       "ParamEyeLSmile": 0.6,
@@ -145,29 +164,27 @@
     "pain": {
       "ParamEyeLOpen": 0.2,
       "ParamEyeROpen": 0.2,
-      "ParamBrowLForm": 0.7,
-      "ParamBrowRForm": 0.7,
-      "ParamMouthForm": -0.4,
-      "ParamMouthOpenY": 0.2
+      "ParamBrowLForm": -0.7,
+      "ParamBrowRForm": -0.7, 
+      "ParamMouthForm": -0.9
     },
 
     "sleepy": {
       "ParamEyeLOpen": 0.35,
       "ParamEyeROpen": 0.35,
-      "ParamMouthOpenY": 0.1,
       "ParamMouthForm": -0.1,
       "ParamBrowLForm": 0.2,
       "ParamBrowRForm": 0.2
     },
 
     "tsundere": {
-      "ParamCheek": -0.7,
+      "ParamCheek": -0.1,
       "ParamMouthForm": 0.4,
       "ParamEyeLSmile": 0.2,
       "ParamEyeRSmile": 0.2,
       "ParamEyeBallX": 0.4,
       "ParamEyeBallY": 0.1,
-      "ParamBrowLForm": 0.1,
+      "ParamBrowLForm": 0.3,
       "ParamBrowRForm": 0.3
     }
   },

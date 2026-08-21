@@ -124,8 +124,8 @@ class TTSEngine:
                 merged_params["ParamAngleY"] = smooth_angle_y
                 merged_params["ParamAngleZ"] = smooth_angle_z
                 # 如果音频长度较长，模拟讲话思考时眼珠四处转动
-                merged_params["ParamEyeBallX"] = -smooth_angle_z * 0.1 if samples.size>100000 else -smooth_angle_z*0.05
-                merged_params["ParamEyeBallY"] = -smooth_angle_z * 0.1 if samples.size>100000 else -smooth_angle_x*0.05
+                #merged_params["ParamEyeBallX"] = smooth_angle_x * 0.1 if samples.size>100000 else smooth_angle_y*0.05
+                #erged_params["ParamEyeBallY"] = smooth_angle_y * 0.1 if samples.size>100000 else smooth_angle_x*0.05
                 merged_params["ParamBodyAngleX"] = smooth_angle_x/5.0
                 merged_params["ParamBodyAngleY"] = smooth_angle_y/5.0
                 merged_params["ParamBodyAngleZ"] = smooth_angle_z/5.0
@@ -141,6 +141,7 @@ class TTSEngine:
                 #控制更新频率
                 await asyncio.sleep(CHUNK_MS / 1000)
 
+            print(f"语音播放完成,耗时: {time.time() - start_ms:.2f} 秒")
             self.is_playing = False
             pygame.mixer.quit()
             os.unlink(tmp_path)

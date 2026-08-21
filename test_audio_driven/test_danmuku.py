@@ -109,6 +109,8 @@ class AIVTuber:
         print("\n--- 🎬 开始模拟直播弹幕 ---")
         print("输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆\n")
         
+        # 启动生物参数更新循环
+        await self.vts.start_bio_loop()
         # 确保 TTS 引擎使用当前事件循环
         self.tts.set_loop(asyncio.get_running_loop())
         
@@ -144,12 +146,6 @@ class AIVTuber:
                     elif cmd == 'clear':
                         self.brain.clear_history()
                         print("🧠 记忆已清空。")
-                    elif cmd == 'skip':
-                        if self.is_speaking:
-                            print("⏭️ 正在跳过当前语音...")
-                            # 由于 edge-tts 不支持中断，这里只做提示
-                        else:
-                            print("⏭️ 当前没有语音播放")
                 
                 # 处理弹幕（异步等待语音完成）
                 await self._process_danmaku_async(danmaku)
@@ -161,14 +157,6 @@ class AIVTuber:
             print(f"❌ 运行出错: {e}")
             self.brain.close()
 
-    def run(self):
-        """主入口"""
-        try:
-            asyncio.run(self.run_async())
-        except KeyboardInterrupt:
-            print("\n👋 程序被用户中断")
-            self.brain.close()
-
 if __name__ == "__main__":
     app = AIVTuber()
-    app.run()
+    asyncio.run(app.run_async())

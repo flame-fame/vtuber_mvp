@@ -394,9 +394,12 @@ class VTSController:
         self.player = AnimationPlayer(self.mapper, self)
         self.scheduler = ActionScheduler(self.player)
         # 启动调度器（需要在异步环境中调用 start）
-        # 注意：此方法应在主循环的异步上下文中调用 start()
         return self.scheduler
-    
+
+    async def start_bio_loop(self):
+        """启动生物参数更新循环"""
+        asyncio.create_task(self.player.start_bio_loop())
+
     async def set_expression(self, expression_name: str, fade_time: float = 0.5):
         """设置表情（异步）"""
         if hasattr(self, 'player'):
