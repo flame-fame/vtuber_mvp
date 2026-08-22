@@ -9,6 +9,9 @@ from ai_brain import AIBrain
 from tts_engine import TTSEngine
 from vts_controller import VTSController
 from danmaku_reader import DanmakuReader, DmType
+from animation_player import AnimationPlayer
+from param_controller import ParamController
+from parameter_mapper import ParameterMapper
 
 class AIVTuber:
     def __init__(self):
@@ -21,7 +24,10 @@ class AIVTuber:
             max_tokens=AI_CONFIG["max_tokens"]
         )
         self.vts = VTSController()
-        self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"], vts=self.vts)
+        self.mapper = ParameterMapper("live2d_param_mapping.json", "face_param_mapping.json")
+        self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"])
+        self.bio = ParamController()
+        self.player = AnimationPlayer(self.mapper, self.vts, self.bio, self.tts)
         self.danmaku_reader = DanmakuReader("danmaku_live.txt")
         self.is_speaking = False
         self._loop = None
@@ -35,7 +41,6 @@ class AIVTuber:
         time.sleep(3)
         
         print("✅ AI 主播初始化完成！准备就绪。")
-        self.scheduler = self.vts.init_animation_system("live2d_param_mapping.json", "face_param_mapping.json")
 
     async def _play_audio_async(self, text):
         """异步播放语音（等待播放完成）"""
@@ -96,9 +101,9 @@ class AIVTuber:
 
         # 2. 激活表情
         if emotion != "neutral":
-            asyncio.create_task(self.vts.set_expression(emotion, 2.0))
+            asyncio.create_task(self.player.set_expression_smooth(emotion, 1.0))
         else:
-            await self.vts.set_expression("neutral")
+            await self.player.set_expression_smooth("neutral", 1.0)
 
         # 4. 播放语音（异步等待完成）
         print("🔈 语音合成中...")
@@ -110,7 +115,7 @@ class AIVTuber:
         print("输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆\n")
         
         # 启动生物参数更新循环
-        await self.vts.start_bio_loop()
+        await self.player.start_bio_loop()
         # 确保 TTS 引擎使用当前事件循环
         self.tts.set_loop(asyncio.get_running_loop())
         

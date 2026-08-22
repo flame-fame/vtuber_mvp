@@ -9,14 +9,6 @@ class ActionPriority(Enum):
     HIGH = 3            # 高：重要反应
     CRITICAL = 4        # 关键：打断当前所有动作
 
-class ActionType(Enum):
-    """动作类型"""
-    EXPRESSION = "expression"      # 表情文件
-    PARAMETER = "parameter"        # 参数调整
-    HOTKEY = "hotkey"              # 热键
-    MOVE = "move"                  # 模型移动
-    COMPOSITE = "composite"        # 复合动作
-
 # VTube Studio 配置
 VTS_CONFIG = {
     "ws_url": "ws://localhost:8001",

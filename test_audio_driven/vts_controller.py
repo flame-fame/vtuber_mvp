@@ -383,34 +383,4 @@ class VTSController:
     def get_response(self):
         return self.response_store
 
-    # ---------- 新增：参数映射与动画播放 ----------
-    def init_animation_system(self, live2d_path: str, face_path: str):
-        """初始化参数映射和动画系统"""
-        from parameter_mapper import ParameterMapper
-        from animation_player import AnimationPlayer
-        from action_scheduler import ActionScheduler
-        
-        self.mapper = ParameterMapper(live2d_path, face_path)
-        self.player = AnimationPlayer(self.mapper, self)
-        self.scheduler = ActionScheduler(self.player)
-        # 启动调度器（需要在异步环境中调用 start）
-        return self.scheduler
-
-    async def start_bio_loop(self):
-        """启动生物参数更新循环"""
-        asyncio.create_task(self.player.start_bio_loop())
-
-    async def set_expression(self, expression_name: str, fade_time: float = 0.5):
-        """设置表情（异步）"""
-        if hasattr(self, 'player'):
-            await self.player.set_expression_smooth(expression_name, fade_time)
-        else:
-            print("⚠️ 动画系统未初始化")
-    
-    async def request_action(self, action_name: str, priority: int ):
-        """请求动作（异步）"""
-        if hasattr(self, 'scheduler'):
-            await self.scheduler.request_action(action_name, priority)
-        else:
-            print("⚠️ 动画系统未初始化")
 

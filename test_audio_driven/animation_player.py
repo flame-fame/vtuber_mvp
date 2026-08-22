@@ -2,69 +2,74 @@ import asyncio
 import time
 from typing import Dict, Any, Optional, Callable
 from parameter_mapper import ParameterMapper
-from bio_controller import BioController
+from param_controller import ParamController
 from vts_controller import VTSController
+from tts_engine import TTSEngine
+
+
 class AnimationPlayer:
     """
-    负责按时间线播放动作序列，支持线性插值，
-    并维护当前表情状态，动作结束后恢复。
+    动画播放器：统一更新动画参数
     """
     
-    def __init__(self, mapper: ParameterMapper, vts_controller: VTSController, update_interval: float = 0.05):
+    def __init__(self, mapper: ParameterMapper, vts_controller: VTSController, param_controller: ParamController, tts_engine: TTSEngine):
         """
         :param mapper: ParameterMapper 实例
         :param vts_controller: VTSController 实例（需有 set_parameters 方法）
-        :param update_interval: 参数更新间隔（秒），默认 20fps
         """
         self.mapper = mapper
         self.vts = vts_controller
-        self.bio = BioController()
-        self.interval = update_interval
+        self.param_controller = param_controller
+        self.tts = tts_engine
         
         # 当前基础表情（持续状态）
         self.current_expression_name = "neutral"
         self.current_expression_params = mapper.get_expression_params("neutral")
-        self.current_actual_params = self.current_expression_params.copy()
+
         self.bio_params = {}
-        self.action_params = {}
+        self.tts_params = {}
 
         # 高频更新任务
         self._bio_update_task: Optional[asyncio.Task] = None
-        # 播放状态
-        self._current_task: Optional[asyncio.Task] = None
+        self._audio_update_task: Optional[asyncio.Task] = None
+
         self._stop_flag = False
 
     async def start_bio_loop(self):
         """启动生物控制器的独立高频更新循环"""
         self._bio_update_task = asyncio.create_task(self._bio_loop())
-    
+    async def start_audio_loop(self):
+        """启动音频控制器的独立高频更新循环"""
+        self._audio_update_task = asyncio.create_task(self._audio_driven_loop())
+
     async def _bio_loop(self):
         """高频生物更新循环（10ms/次）"""
         # 眼睛和身体更新频率5:1
-        round=0
+        round = 0
+        last_time = time.time()
         while True:
             try:
                 # 更新所有生物参数（包括眼球和眨眼）
-                round+=1
+                round += 1
                 current_time = time.time()
+                delta = current_time - last_time
+                last_time = current_time
+
                 bio_params = {}
                 eye_params = {}
                 body_params = {}
-                eye_params.update(self.bio.update_eyes(current_time))
-                eye_params.update(self.bio.update_blink(current_time))
+                eye_params.update(self.param_controller.update_eyes(delta))
+                eye_params.update(self.param_controller.update_blink(current_time))
                 bio_params=eye_params.copy()
-                # 眼睛和身体更新频率5:1
-                if round%5==0:
-                    body_params.update(self.bio.update_breath(current_time))
-                    body_params.update(self.bio.update_micro_movement(current_time))
-                    bio_params.update(body_params)
+                # if round % 5 == 0:
+                #      body_params.update(self.bio.update_breath(current_time))
+                #      body_params.update(self.bio.update_micro_movement(current_time))
+                #      bio_params.update(body_params)
                 # 合并到生物参数
                 self.bio_params = bio_params.copy()
                 # 与其他参数合并发送
                 self._send_merged_params()
-                # 打印调试信息
-                # print(f"👁️ 眼球: {self.bio_params.get('EyeBallX', 0):.3f}, {self.bio_params.get('EyeBallY', 0):.3f}")
-                # print(f"😉 眨眼状态: {'闭眼' if self.bio_params.get('EyeLOpen', 1) < 0.5 else '睁眼'}")
+    
                 await asyncio.sleep(0.02)  # 50fps 更新频率
             except asyncio.CancelledError:
                 break
@@ -102,6 +107,21 @@ class AnimationPlayer:
         self.current_expression_name = expression_name
         self.current_expression_params = target_params.copy()
 
+    async def _audio_driven_loop(self):
+        """根据音频驱动微动作"""
+        tts = self.tts
+        while tts.is_playing and tts.mixer.music.get_busy() and chunk_index <= len(tts.rms_array):
+            try:
+                self.tts_params = self.param_controller.update_audio_driven_movement(tts.rms_array, tts.chunk_ms)
+                self._send_merged_params()
+                #控制更新频率
+                await asyncio.sleep(self.tts.chunk_ms / 1000)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"⚠️ 音频驱动参数更新异常: {e}")
+
+
     def _send_merged_params(self):
         """合并所有参数并发送给 VTS"""
         # 1. 从基础表情复制
@@ -113,9 +133,9 @@ class AnimationPlayer:
                 merged[param] = value
             # 如果表情里有，不覆盖（保持表情优先）
         
-        # 3. 叠加动作参数（覆盖表情和生物）
-        for param, value in self.action_params.items():
-            merged[param] = value  # 动作优先级最高
+        # 3. 叠加 TTS 动作参数（覆盖表情和生物）
+        for param, value in self.tts_params.items():
+            merged[param] = value  # TTS 动作优先级最高
         
         # 4. 发送到 VTS
         vts_params = self.mapper.to_vts_params(merged)
