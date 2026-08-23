@@ -89,9 +89,9 @@ class AIVTuber:
         rms_array, duration = await asyncio.to_thread(self.tts.compute_rms, tmp_path)
         # 2. 激活表情
         if emotion != "neutral":
-            expression_task = asyncio.create_task(self.player.active_expression_by_file(emotion))
+            self.player.active_expression_by_file(emotion)
         else:
-            expression_task = asyncio.create_task(self.player.active_expression_by_file("neutral"))
+            self.player.active_expression_by_file("neutral")
         
         # 4. 播放语音（异步等待完成）
         play_task = asyncio.create_task(self.tts.play_music(tmp_path))
@@ -100,7 +100,7 @@ class AIVTuber:
         # 5. 等待三个任务完成
         try:
             await asyncio.wait_for(
-                asyncio.gather(expression_task, play_task, animation_task, return_exceptions=True),
+                asyncio.gather(play_task, animation_task, return_exceptions=True),
                 timeout=30.0
             )
         except asyncio.TimeoutError:
