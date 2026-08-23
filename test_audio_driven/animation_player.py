@@ -12,7 +12,7 @@ class AnimationPlayer:
     动画播放器：统一更新动画参数
     """
     
-    def __init__(self, mapper: ParameterMapper, vts_controller: VTSController, param_controller: ParamController, tts_engine: TTSEngine):
+    def __init__(self, mapper: ParameterMapper, vts_controller: VTSController, param_controller: ParamController):
         """
         :param mapper: ParameterMapper 实例
         :param vts_controller: VTSController 实例（需有 set_parameters 方法）
@@ -20,7 +20,6 @@ class AnimationPlayer:
         self.mapper = mapper
         self.vts = vts_controller
         self.param_controller = param_controller
-        self.tts = tts_engine
         
         # 当前基础表情（持续状态）
         self.current_expression_name = "neutral"
@@ -28,21 +27,9 @@ class AnimationPlayer:
 
         self.bio_params = {}
         self.tts_params = {}
+        self.last_sent_params = {}
 
-        # 高频更新任务
-        self._bio_update_task: Optional[asyncio.Task] = None
-        self._audio_update_task: Optional[asyncio.Task] = None
-
-        self._stop_flag = False
-
-    async def start_bio_loop(self):
-        """启动生物控制器的独立高频更新循环"""
-        self._bio_update_task = asyncio.create_task(self._bio_loop())
-    async def start_audio_loop(self):
-        """启动音频控制器的独立高频更新循环"""
-        self._audio_update_task = asyncio.create_task(self._audio_driven_loop())
-
-    async def _bio_loop(self):
+    async def bio_loop(self):
         """高频生物更新循环（10ms/次）"""
         # 眼睛和身体更新频率5:1
         round = 0
@@ -76,6 +63,11 @@ class AnimationPlayer:
             except Exception as e:
                 print(f"⚠️ 生物循环异常: {e}")
         
+    def active_expression_by_file(self, expression_name: str):
+        """激活新表情"""
+        self.vts.activate_expression(expression_name, fade_time=0.5, active=True)
+        self.current_expression_name = expression_name
+
     async def set_expression_smooth(self, expression_name: str, fade_time: float = 3) -> None:
         """平滑过渡到新表情"""
         target_params = self.mapper.get_expression_params(expression_name)
@@ -107,19 +99,36 @@ class AnimationPlayer:
         self.current_expression_name = expression_name
         self.current_expression_params = target_params.copy()
 
-    async def _audio_driven_loop(self):
+    async def audio_driven_loop(self, tts_engine: TTSEngine, rms_array: list):
         """根据音频驱动微动作"""
-        tts = self.tts
-        while tts.is_playing and tts.mixer.music.get_busy() and chunk_index <= len(tts.rms_array):
-            try:
-                self.tts_params = self.param_controller.update_audio_driven_movement(tts.rms_array, tts.chunk_ms)
+        tts = tts_engine
+        chunk_ms = tts.chunk_ms
+        chunk_index = 0
+        start_ms = time.time()
+        rms_array = rms_array.copy()
+        duration = tts.audio_duration
+        try:
+            while time.time() - start_ms < duration+1:   # 加一秒缓冲
+           
+                # 时间索引获取rms值
+                elapsed_ms = (time.time() - start_ms) * 1000
+                chunk_index = int(elapsed_ms / chunk_ms)
+                if chunk_index >= len(rms_array):
+                    break
+                rms = rms_array[chunk_index]
+                # 更新TTS参数(由param_controller处理)
+                self.tts_params = self.param_controller.update_audio_driven_movement(rms, elapsed_ms)
                 self._send_merged_params()
                 #控制更新频率
-                await asyncio.sleep(self.tts.chunk_ms / 1000)
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                print(f"⚠️ 音频驱动参数更新异常: {e}")
+                await asyncio.sleep(chunk_ms / 1000)
+        except asyncio.CancelledError:
+            print("音频驱动循环被取消")
+        except Exception as e:
+            print(f"⚠️ 音频驱动参数更新异常: {e}")
+        finally:
+            # 音频播放结束后，清理 TTS 参数
+            self.tts_params = {}
+            self._send_merged_params()
 
 
     def _send_merged_params(self):
@@ -138,5 +147,7 @@ class AnimationPlayer:
             merged[param] = value  # TTS 动作优先级最高
         
         # 4. 发送到 VTS
-        vts_params = self.mapper.to_vts_params(merged)
-        self.vts.set_parameters(vts_params)
+        if merged != self.last_sent_params:
+            vts_params = self.mapper.to_vts_params(merged)
+            self.vts.set_parameters(vts_params)
+            self.last_sent_params = merged.copy()

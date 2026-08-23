@@ -12,6 +12,8 @@ from danmaku_reader import DanmakuReader, DmType
 from animation_player import AnimationPlayer
 from param_controller import ParamController
 from parameter_mapper import ParameterMapper
+import os
+import pygame
 
 class AIVTuber:
     def __init__(self):
@@ -26,11 +28,10 @@ class AIVTuber:
         self.vts = VTSController()
         self.mapper = ParameterMapper("live2d_param_mapping.json", "face_param_mapping.json")
         self.tts = TTSEngine(voice=TTS_CONFIG["voice"], rate=TTS_CONFIG["rate"])
-        self.bio = ParamController()
-        self.player = AnimationPlayer(self.mapper, self.vts, self.bio, self.tts)
+        self.param_controller = ParamController()
+        self.player = AnimationPlayer(self.mapper, self.vts, self.param_controller)
         self.danmaku_reader = DanmakuReader("danmaku_live.txt")
         self.is_speaking = False
-        self._loop = None
         # 2. 连接 VTS
         if not self.vts.connect():
             print("❌ 无法连接到 VTube Studio，请检查是否开启并配置了API。")
@@ -39,28 +40,13 @@ class AIVTuber:
         # 等待认证完成
         print("⏳ 等待 VTS 认证...")
         time.sleep(3)
-        
         print("✅ AI 主播初始化完成！准备就绪。")
-
-    async def _play_audio_async(self, text):
-        """异步播放语音（等待播放完成）"""
-        if not text:
-            return
-        
-        self.is_speaking = True
-        try:
-            # 直接调用异步方法
-            await self.tts._speak_async(text)
-        finally:
-            self.is_speaking = False
-            print("🔈 语音播放完成")
 
     async def _process_danmaku_async(self, danmaku):
         """异步处理单条弹幕"""
         # 跳过系统消息
         if danmaku.dtype == DmType.SYSTEM:
             return
-        
         # 构建用户输入
         sys_reply_text = ""
         if danmaku.dtype == DmType.ENTER:
@@ -98,16 +84,36 @@ class AIVTuber:
         #print(f"🤖 AI: {reply_text}")
         print(f"🎭 表情: {emotion}")
         print(f"🎬 动作: {action}")
-
+        #  1. 合成音频(放到线程池，避免阻塞事件循环)
+        tmp_path = await asyncio.to_thread(self.tts.synthesize, reply_text)
+        rms_array, duration = await asyncio.to_thread(self.tts.compute_rms, tmp_path)
         # 2. 激活表情
         if emotion != "neutral":
-            asyncio.create_task(self.player.set_expression_smooth(emotion, 1.0))
+            expression_task = asyncio.create_task(self.player.active_expression_by_file(emotion))
         else:
-            await self.player.set_expression_smooth("neutral", 1.0)
-
+            expression_task = asyncio.create_task(self.player.active_expression_by_file("neutral"))
+        
         # 4. 播放语音（异步等待完成）
-        print("🔈 语音合成中...")
-        await self._play_audio_async(reply_text)
+        play_task = asyncio.create_task(self.tts.play_music(tmp_path))
+        animation_task = asyncio.create_task(self.player.audio_driven_loop(self.tts, rms_array))
+
+        # 5. 等待三个任务完成
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(expression_task, play_task, animation_task, return_exceptions=True),
+                timeout=30.0
+            )
+        except asyncio.TimeoutError:
+            print("⚠️ 任务播放超时")
+            expression_task.cancel()
+            play_task.cancel()
+            animation_task.cancel()
+        except Exception as e:
+            print(f"⚠️ 等待任务完成时出错: {e}")
+
+        # 6. 删除临时文件
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
 
     async def run_async(self):
         """异步主循环"""
@@ -115,7 +121,7 @@ class AIVTuber:
         print("输入 'quit' 退出, 'history' 查看历史, 'clear' 清空记忆\n")
         
         # 启动生物参数更新循环
-        await self.player.start_bio_loop()
+        asyncio.create_task(self.player.bio_loop())
         # 确保 TTS 引擎使用当前事件循环
         self.tts.set_loop(asyncio.get_running_loop())
         
@@ -153,7 +159,12 @@ class AIVTuber:
                         print("🧠 记忆已清空。")
                 
                 # 处理弹幕（异步等待语音完成）
-                await self._process_danmaku_async(danmaku)
+                try:
+                    await self._process_danmaku_async(danmaku)
+                except Exception as e:
+                    print(f"⚠️ 处理弹幕时出错: {e}")
+                    # 继续处理下一个弹幕
+                    continue
                 
         except KeyboardInterrupt:
             print("\n👋 程序被用户中断")

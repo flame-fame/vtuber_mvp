@@ -28,8 +28,8 @@ class VTSController:
         self.message_callbacks = []
         # 线程锁
         self.lock = threading.Lock()
-        # 热键映射
-        self.hotkey_map={}
+        # 可用热键
+        self.available_hotkeys=[]
 
     def connect(self):
         """建立WebSocket连接"""
@@ -157,8 +157,8 @@ class VTSController:
                 hotkeys_data = data.get("data", {})
                 for hotkey in hotkeys_data.get("availableHotkeys", []):
                     name = hotkey.get("name")
-                    self.hotkey_map[name] = name
-                print(f"✅ VTS - 成功获取{len(self.hotkey_map)}个热键")
+                    self.available_hotkeys.append(name)
+                print(f"✅ VTS - 成功获取{len(self.available_hotkeys)}个热键: {self.available_hotkeys}")
                    
 
 
@@ -310,17 +310,13 @@ class VTSController:
         self, expression_name: str, fade_time: float = 0.5, active: bool = True
     ):
         """激活/取消表情"""
-        name = EMOTION_MAPPING.get(expression_name, {}).get("resource", "")
-        if not name:
-            print(f"⚠️ 未找到名为 '{expression_name}' 的表情资源")
-            return
         if not self.authenticated:
             print("❌ 未认证")
             return
         self._send_request(
             "ExpressionActivationRequest",
             {
-                "expressionFile": f"{name}.exp3.json",
+                "expressionFile": f"{expression_name}.exp3.json",
                 "fadeTime": fade_time,
                 "active": active,
             },
@@ -345,28 +341,16 @@ class VTSController:
 
     def _build_hotkey_map(self):
        """请求热键列表并构建 name→ID 映射（同步等待）"""
-       if self.hotkey_map:   # 已缓存则跳过
+       if self.available_hotkeys:   # 已缓存则跳过
             return
        print(f"✅ VTS - 发送获取热键列表请求")
        return self._send_request("HotkeysInCurrentModelRequest", {})
-       
-    # ---------- 新增：按名称触发热键 ----------
-    def trigger_action_by_name(self, hk_name: str) -> bool:
-        """
-        根据热键名称触发对应的热键
-        :param hk_name: 热键名称（如 "点头"）
-        :return: 是否成功触发
-        """
-        name = EMOTION_MAPPING.get(hk_name, {}).get("resource", "")
-        if name:
-            self.trigger_hotkey(name)
-            return True
-        else:
-            print(f"⚠️ 未找到名为 '{hk_name}' 的热键")
-            return False
 
     def trigger_hotkey(self, hotkey_id):
         """触发一个已配置的热键"""
+        if hotkey_id not in self.available_hotkeys:
+            print(f"⚠️ 未找到热键ID {hotkey_id}")
+            return
         self._send_request("HotkeyTriggerRequest", {"hotkeyID": hotkey_id})
         print(f"✅ VTS - 发送触发热键请求 {hotkey_id}")
 

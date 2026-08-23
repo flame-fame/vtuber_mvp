@@ -3,7 +3,6 @@ import math
 import random
 import time
 from typing import Dict
-import numpy as np
 
 class ParamController:
     """
@@ -40,6 +39,12 @@ class ParamController:
         # 头部微动（极微小）
         self.micro_angle_phase = 0.0
         self.micro_angle_amplitude = 0.5  # 微动幅度（度）
+
+        # 音频驱动参数
+        self.smooth_angle_y = 0.0
+        self.smooth_angle_x = 0.0
+        self.smooth_angle_z = 0.0
+        self.smooth_factor = 0.1  # 平滑因子，越小越平滑
         
     def update_eyes(self, dt: float) -> Dict[str, float]:
         current_time = time.time()
@@ -59,10 +64,10 @@ class ParamController:
         # 3. 偶尔的扫视
         self._saccade_timer += dt
         # 触发扫视（随机间隔 2~5 秒）
-        if self._saccade_phase == 0 and self._saccade_timer > self.rng.uniform(2.0, 5.0):
+        if self._saccade_phase == 0 and self._saccade_timer > self.rng.uniform(5.0, 8.0):
             self._saccade_phase = 1
-            self._saccade_target_x = self.rng.uniform(-0.9, 0.9)
-            self._saccade_target_y = self.rng.uniform(-0.9, 0.9)
+            self._saccade_target_x = self.rng.uniform(-0.8, 0.8)
+            self._saccade_target_y = self.rng.uniform(-0.8, 0.8)
             self._saccade_start_time = current_time
             self._saccade_duration = 0.15  # 扫视持续 150ms（非常快）
         
@@ -164,27 +169,18 @@ class ParamController:
             "ParamAngleZ": noise_z,
         }
 
-    def update_audio_driven_movement(self, rms_array: np.ndarray, chunk_ms: float = 20.0) -> Dict[str, float]:
+    def update_audio_driven_movement(self, rms: float, dt: float) -> Dict[str, float]:
         """根据音频驱动参数"""
-        rms_array = rms_array
-        chunk_ms = chunk_ms
         # 用于平滑的参数
-        smooth_angle_y = 0.0
-        smooth_angle_x = 0.0
-        smooth_angle_z = 0.0
-        smooth_factor = 0.1  # 平滑因子，越小越平滑
-
-        chunk_index = 0
-        start_ms = time.time()
-
+        smooth_angle_y = self.smooth_angle_y
+        smooth_angle_x = self.smooth_angle_x
+        smooth_angle_z = self.smooth_angle_z
+        smooth_factor = self.smooth_factor  # 平滑因子，越小越平滑
         
-        # 时间索引获取rms值
-        elapsed_ms = (time.time() - start_ms) * 1000
-        chunk_index = int(elapsed_ms / chunk_ms)
-        rms = rms_array[chunk_index]
         # 将 RMS 映射到头部角度
+        # RMS 范围在 0.0 到 1.0 之间，有几个数量级差距
         # 1. 头部随音量上下摆动（点头），音量越大，头越低
-        phase = (elapsed_ms / 1000) * 5  # 5Hz 摆动频率
+        phase = (dt / 1000) * 5  # 5Hz 摆动频率
         target_angle_y = min(rms * 200.0 * math.sin(phase * 2), 10.0)  # 最大 10 度
         
         # 2. 头部随音量左右微摇（摇头），音量越大，摆动幅度越大
@@ -206,11 +202,16 @@ class ParamController:
         merged_params["ParamAngleY"] = smooth_angle_y
         merged_params["ParamAngleZ"] = smooth_angle_z
         
-        merged_params["ParamBodyAngleX"] = smooth_angle_x/5.0
-        merged_params["ParamBodyAngleY"] = smooth_angle_y/5.0
-        merged_params["ParamBodyAngleZ"] = smooth_angle_z/5.0
+        merged_params["ParamBodyAngleX"] = smooth_angle_x / 5.0
+        merged_params["ParamBodyAngleY"] = smooth_angle_y / 5.0
+        merged_params["ParamBodyAngleZ"] = smooth_angle_z / 5.0
 
         merged_params["ParamArmLA"] = smooth_angle_x * 10
         merged_params["ParamArmRA"] = smooth_angle_x * 10
+
+        # 更新平滑角度
+        self.smooth_angle_y = smooth_angle_y
+        self.smooth_angle_x = smooth_angle_x
+        self.smooth_angle_z = smooth_angle_z
 
         return merged_params
