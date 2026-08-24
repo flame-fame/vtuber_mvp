@@ -99,7 +99,7 @@ class AIVTuber:
         user_input = ""
         sys_reply_text = ""
         if danmaku.dtype == DmType.SYSTEM:
-            return ""
+            return user_input, sys_reply_text
         elif danmaku.dtype == DmType.ENTER:
             user_input = f"{danmaku.username} 进入直播间"
             sys_reply_text = f"欢迎 {danmaku.username}！"
@@ -181,6 +181,9 @@ class AIVTuber:
         danmaku_iter = self.danmaku_reader.stream()
         try:
             async for danmaku in danmaku_iter:
+                if danmaku.dtype == DmType.SYSTEM:
+                    continue
+                self.proactive_mode = self.danmaku_reader.is_long_wait
                 # 检查用户输入
                 while not input_queue.empty():
                     cmd = await input_queue.get()
@@ -194,15 +197,6 @@ class AIVTuber:
                     elif cmd == 'clear':
                         self.brain.clear_history()
                         print("🧠 记忆已清空。")
-                    elif cmd == 'proactive on':
-                        self.proactive_mode = True
-                        print("🔊 主动发言已开启")
-                    elif cmd == 'proactive off':
-                        self.proactive_mode = False
-                        print("🔇 主动发言已关闭")
-                    elif cmd == 'test proactive':
-                        # 测试主动发言
-                        await self._do_proactive_message()
 
                 # 处理弹幕（异步等待语音完成）
                 try:

@@ -28,6 +28,8 @@ class DanmakuReader:
     def __init__(self, path: str, speed: float = 1.0):
         self.speed = speed
         self.items: list[Danmaku] = []
+        self.long_wait_time = 15.0
+        self.is_long_wait = False
         self._parse(path)
 
     def _parse(self, path: str):
@@ -58,6 +60,12 @@ class DanmakuReader:
         for dm in self.items:
             target = dm.offset / self.speed
             wait = target - (time.perf_counter() - t0)
-            if wait > 0:
+            # 等待弹幕时间间隔（超过long_wait_time秒应该主动说话）
+            if wait > 0 and wait < self.long_wait_time:
+                await asyncio.sleep(wait)
+                self.is_long_wait = False
+            elif wait >= self.long_wait_time:
+                self.is_long_wait = True
                 await asyncio.sleep(wait)
             yield dm
+

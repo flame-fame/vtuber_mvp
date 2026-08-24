@@ -1,14 +1,4 @@
 # ==================== 配置文件 ====================
-# 动作优先级\动作类型
-from enum import Enum
-class ActionPriority(Enum):
-    """动作优先级（数值越高优先级越高）"""
-    BACKGROUND = 0      # 背景级：空闲状态
-    LOW = 1             # 低：默认表情
-    NORMAL = 2          # 普通：情绪表达
-    HIGH = 3            # 高：重要反应
-    CRITICAL = 4        # 关键：打断当前所有动作
-
 # VTube Studio 配置
 VTS_CONFIG = {
     "ws_url": "ws://localhost:8001",
