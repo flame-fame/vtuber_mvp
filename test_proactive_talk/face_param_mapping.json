@@ -1,0 +1,30 @@
+{
+    "ParamFacePositionX": "FacePositionX",
+    "ParamFacePositionY": "FacePositionY",
+    "ParamFacePositionZ": "FacePositionZ",
+
+    "ParamAngleX": "FaceAngleX",        
+    "ParamAngleY": "FaceAngleY",        
+    "ParamAngleZ": "FaceAngleZ",        
+    "ParamCheek": "BrowLeftY",        
+
+    "ParamMouthForm": "MouthSmile",        
+    "ParamMouthOpenY": "VoiceVolumePlusMouthOpen",           
+
+    "ParamEyeLOpen": "EyeOpenLeft",
+    "ParamEyeROpen": "EyeOpenRight",
+    "ParamEyeLSmile": "MouthSmile",
+    "ParamEyeRSmile": "MouthSmile",
+    "ParamEyeBallX": "EyeLeftX",
+    "ParamEyeBallY": "EyeLeftY",
+
+    "ParamBrowLForm": "Brows",
+    "ParamBrowRForm": "Brows",
+
+    "ParamBodyAngleX": "HandLeftPositionX",
+    "ParamBodyAngleY": "HandLeftPositionY",
+    "ParamBodyAngleZ": "HandLeftPositionZ",
+
+    "ParamArmLA": "HandLeftAngleX",
+    "ParamArmRA": "HandRightAngleX"
+}

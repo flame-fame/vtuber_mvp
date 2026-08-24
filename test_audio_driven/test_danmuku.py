@@ -84,14 +84,14 @@ class AIVTuber:
         #print(f"🤖 AI: {reply_text}")
         print(f"🎭 表情: {emotion}")
         print(f"🎬 动作: {action}")
-        #  1. 合成音频(放到线程池，避免阻塞事件循环)
-        tmp_path = await asyncio.to_thread(self.tts.synthesize, reply_text)
-        rms_array, duration = await asyncio.to_thread(self.tts.compute_rms, tmp_path)
+        #  1. 合成音频
+        tmp_path = await self.tts.synthesize(reply_text)
+        rms_array, duration = await self.tts.compute_rms(tmp_path)
         # 2. 激活表情
         if emotion != "neutral":
-            self.player.active_expression_by_file(emotion)
+            expression_task = asyncio.create_task(self.player.toggle_expression(emotion, fade_time=0.5, duration=duration))
         else:
-            self.player.active_expression_by_file("neutral")
+            expression_task = asyncio.create_task(self.player.set_expression_smooth("neutral", fade_time=0.5))
         
         # 4. 播放语音（异步等待完成）
         play_task = asyncio.create_task(self.tts.play_music(tmp_path))
@@ -100,8 +100,8 @@ class AIVTuber:
         # 5. 等待三个任务完成
         try:
             await asyncio.wait_for(
-                asyncio.gather(play_task, animation_task, return_exceptions=True),
-                timeout=30.0
+                asyncio.gather(expression_task, play_task, animation_task, return_exceptions=True),
+                timeout=30.0 # 30秒超时
             )
         except asyncio.TimeoutError:
             print("⚠️ 任务播放超时")

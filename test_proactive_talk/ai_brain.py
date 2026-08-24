@@ -2,6 +2,7 @@ import ollama
 import re
 import asyncio
 import random
+import time
 from datetime import datetime
 from typing import Tuple, Dict
 from config import *
@@ -18,8 +19,9 @@ class AIBrain:
         self.max_history = AI_CONFIG["max_history"]  
         self.emotions_list = ["neutral", "happy", "very_happy", "sad", "angry", "surprised", "shy", "serious", "teasing", "bored", "confused", "disgusted", "excited", "pain", "sleepy", "tsundere"]
         self.actions_list = ["nod", "shake_head", "tilt_head", "shrug", "laugh", "cry", "think", "body_bounce", "body_sway", "hip_sway", "spin_jump", "cheer_jump", "head_bob"]
+        self.last_interaction_time = time.time()
         
-    async def chat(self, user_input: str) -> Tuple[str, str, float]:
+    async def chat(self, user_input: str) -> Tuple[str, str, float]: 
         """
         与AI对话
         Returns:
@@ -57,19 +59,12 @@ class AIBrain:
             print(f"🤖 AI Text: {ai_text}")
             # 提取情绪标签
             emotion = self._extract_emotion(ai_text)
-             # 提取强度值
-            #intensity = self._extract_intensity(ai_text)
             # 提取动作标签
             action = self._extract_action(ai_text)
             print(f"💦 extracted Emotion: {emotion}, Action: {action}")
             
             # 移除情绪标签
-            # 1. 先统一将全角括号转为半角
-            ai_text_fixed = ai_text.replace('［', '[').replace('］', ']')
-            # 2. 移除所有 [xxx:yyy] 或 [xxx] 或 [xxx]:yyy 模式的标签（不限于末尾）
-            clean_text = re.sub(r'\[[^\[\]]*\]|\[[^\[\]]*\]:[^\[\]]*', '', ai_text_fixed).strip()
-            # 如果还有残留的冒号分隔（如 [@_@]:Smile 这种），单独处理
-            clean_text = re.sub(r'\[[^\[\]]*\]:[^\[\]]*', '', clean_text).strip()
+            clean_text = self.clean_response_text(ai_text)
             
             # 更新历史
             self.conversation_history.append({"role": "user", "content": user_input})
@@ -82,6 +77,27 @@ class AIBrain:
             # 打印错误信息  
             print(f"❌ AI 接口报错: {e}")
             return "哼，本小姐现在不想说话！", "neutral", "think"
+
+    def clean_response_text(self, ai_text: str) -> str:
+        """清理响应文本，移除情绪标签和动作标签"""
+        # 1. 先统一将全角括号转为半角
+        ai_text_fixed = ai_text.replace('［', '[').replace('］', ']')
+        # 2. 移除所有 [xxx:yyy] 或 [xxx] 或 [xxx]:yyy 模式的标签（不限于末尾）
+        clean_text = re.sub(r'\[[^\[\]]*\]|\[[^\[\]]*\]:[^\[\]]*', '', ai_text_fixed).strip()
+        # 如果还有残留的冒号分隔（如 [@_@]:Smile 这种），单独处理
+        clean_text = re.sub(r'\[[^\[\]]*\]:[^\[\]]*', '', clean_text).strip()
+        return clean_text
+    
+    def format_history_for_prompt(self) -> str:
+        """格式化对话历史，准备用于模型输入"""
+        if not self.conversation_history:
+            return "暂无历史对话"
+        history_text = ""
+        for msg in self.conversation_history[-5:]:  # 最近5条
+            role = "用户" if msg["role"] == "user" else "AI"
+            content = msg["content"][:50]  # 截断过长的内容
+            history_text += f"{role}: {content}\n"
+        return history_text
     
     def _extract_emotion(self, text):
          # 先统一括号为半角
@@ -126,3 +142,7 @@ class AIBrain:
     def clear_history(self):
         """清空对话历史"""
         self.conversation_history = []
+
+    def update_last_interaction(self):
+        """更新最近一次交互"""
+        self.last_interaction_time = time.time()

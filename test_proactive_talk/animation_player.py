@@ -101,7 +101,7 @@ class AnimationPlayer:
         """切换表情"""
         try:
             await self.set_expression_smooth(expression_name, fade_time)
-            print(f"切换表情 {expression_name}")
+            #print(f"切换表情 {expression_name}")
             loop=asyncio.get_running_loop()
             # 异步延时：播放完成后，恢复中性表情
             loop.call_later(duration-2*fade_time, lambda: asyncio.create_task(self.set_expression_smooth("neutral", fade_time=0.5)))
