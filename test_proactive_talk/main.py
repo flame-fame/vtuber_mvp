@@ -93,7 +93,7 @@ class AIVTuber:
         print(f"思考耗时: {elapsed_time:.4f} 秒")
         return reply_text, emotion, action
 
-    async def process_danmaku(self, danmaku) -> tuple[str, str]:
+    async def do_danmaku_message(self, danmaku) -> tuple[str, str, str]:
         """异步处理单条弹幕"""
         # 生成系统回复消息（不调用AI）
         user_input = ""
@@ -116,9 +116,17 @@ class AIVTuber:
         # 显示系统弹幕
         print(f"\n📺 弹幕 [{danmaku.offset:.1f}s]: {user_input}")
         
-        return user_input, sys_reply_text
+        if sys_reply_text:
+            reply_text = sys_reply_text
+            emotion = "neutral"
+            action = "think"
+        else:
+            print("💬 思考中...")
+            reply_text, emotion, action = await self.process_ai(user_input)
+
+        return reply_text, emotion, action
     
-    def _should_proactive(self) -> bool:
+    def should_proactive(self) -> bool:
         """判断是否应该主动发言"""
         current_time = time.time()
         
@@ -137,19 +145,19 @@ class AIVTuber:
         
         return True
     
-    async def _do_proactive_message(self) -> tuple[str, str, str]:
+    async def do_proactive_message(self) -> tuple[str, str, str]:
         """执行主动发言"""
         try:
             print("\n💭 主动发言中...")
             user_input = random.choice(TOPIC_POOL)
+            print(f"话题：{user_input}")
             # 生成主动消息
             reply_text, emotion, action = await self.brain.chat(user_input)
         except Exception as e:
             print(f"⚠️ 主动发言时出错: {e}")
-            return "", "neutral", "think"
+            return "哎呀，本小姐得好好想想再说！", "neutral", "think"
             
         print(f"🤖 AI主动说: {reply_text}")
-        print(f"🎭 表情: {emotion}, 动作: {action}")
         
         # 更新最后主动发言时间
         self.last_proactive_time = time.time()
@@ -176,15 +184,10 @@ class AIVTuber:
                     break
         input_thread = threading.Thread(target=input_listener, daemon=True)
         input_thread.start()
-        
-        # 获取弹幕流迭代器
-        danmaku_iter = self.danmaku_reader.stream()
+
         try:
-            async for danmaku in danmaku_iter:
-                if danmaku.dtype == DmType.SYSTEM:
-                    continue
-                self.proactive_mode = self.danmaku_reader.is_long_wait
-                # 检查用户输入
+            while True:
+                 # 检查用户输入
                 while not input_queue.empty():
                     cmd = await input_queue.get()
                     if cmd == 'quit':
@@ -197,36 +200,21 @@ class AIVTuber:
                     elif cmd == 'clear':
                         self.brain.clear_history()
                         print("🧠 记忆已清空。")
+                # 获取弹幕或主动发言时机
+                danmaku = await self.danmaku_reader.wait_for_danmaku_or_proactive()
+                # 如果没有弹幕，主动发言
+                if danmaku is None:
+                    # 执行主动发言
+                    reply_text, emotion, action = await self.do_proactive_message()
+                else: # 处理弹幕
+                    # 跳过系统消息
+                    if danmaku.dtype == DmType.SYSTEM:
+                        continue
+                    reply_text, emotion, action = await self.do_danmaku_message(danmaku)
 
-                # 处理弹幕（异步等待语音完成）
-                try:
-                    sys_reply_text = ""
-                    user_input = ""
-                    # 检查是否需要主动发言
-                    if not self.proactive_mode:
-                        user_input, sys_reply_text = await self.process_danmaku(danmaku)
-                    else:
-                        user_input = random.choice(TOPIC_POOL)
-                        
-                    # 系统生成欢迎和感谢回复    
-                    if sys_reply_text:
-                        reply_text = sys_reply_text
-                        emotion = "neutral"
-                        action = "think"
-                        sys_reply_text = ""
-                    else:
-                        # 普通弹幕，调用 AI 思考
-                        print("💬 思考中...")
-                        reply_text, emotion, action = await self.process_ai(user_input)
-
-                    print(f"🎭 表情: {emotion}")
-                    # 处理 TTS 任务和表情动画   
-                    await self.process_tts(reply_text, emotion)
-                except Exception as e:
-                    print(f"⚠️ 处理弹幕时出错: {e}")
-                    # 继续处理下一个弹幕
-                    continue
-                
+                print(f"🎭 表情: {emotion}")
+                await self.process_tts(reply_text, emotion)
+                         
         except KeyboardInterrupt:
             print("\n👋 程序被用户中断")
             self.brain.close()

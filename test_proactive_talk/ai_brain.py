@@ -84,7 +84,7 @@ class AIBrain:
         ai_text_fixed = ai_text.replace('［', '[').replace('］', ']')
         # 2. 移除所有 [xxx:yyy] 或 [xxx] 或 [xxx]:yyy 模式的标签（不限于末尾）
         clean_text = re.sub(r'\[[^\[\]]*\]|\[[^\[\]]*\]:[^\[\]]*', '', ai_text_fixed).strip()
-        # 如果还有残留的冒号分隔（如 [@_@]:Smile 这种），单独处理
+        # 处理残留的冒号分隔（如 [@_@]:Smile 这种）
         clean_text = re.sub(r'\[[^\[\]]*\]:[^\[\]]*', '', clean_text).strip()
         return clean_text
     
