@@ -84,7 +84,7 @@ class AIVTuber:
         # 系统生成欢迎和感谢回复
         if sys_reply_text:
             reply_text = sys_reply_text
-            emotion = "Normal"
+            emotion = "Neutral"
             action = "Neutral"
             sys_reply_text = ""
         else:
@@ -98,13 +98,13 @@ class AIVTuber:
         print(f"🎬 动作: {action}")
 
         # 2. 激活表情
-        if emotion != "Normal":
+        if emotion != "Neutral":
             self.vts.activate_expression(emotion, active=True)
             emotion_duration = 4
             # 同步阻塞的代码，用Threading执行
             threading.Timer(emotion_duration, lambda: self.vts.activate_expression(emotion, active=False)).start()
         else:
-            self.vts.activate_expression("Normal", active=True)
+            self.vts.activate_expression("Neutral", active=True)
 
         # 3. 触发动作
         if action != "Neutral":

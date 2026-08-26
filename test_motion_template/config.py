@@ -68,13 +68,21 @@ EMOTION_MAPPING = {
     "Surprised": {"type": "action", "resource": "Surprised"}, 
     "Proud": {"type": "action", "resource": "Proud"}, 
     "Sad": {"type": "action", "resource": "Sad"}, 
-    "Angry": {"type": "expression", "resource": "Angry"},  
-    "Sad": {"type": "expression", "resource": "Sad"},    
-    "Blushing": {"type": "expression", "resource": "Blushing"},         
-    "Smile": {"type": "expression", "resource": "Smile"},       # 惊讶
-    "Stunned": {"type": "expression", "resource": "Stuned"},          # 伤心 → 表情
-    "Surprised": {"type": "expression", "resource": "Surprised"}, 
-    "Teasing": {"type": "expression", "resource": "BadSmile"},  
-    "Disgusted": {"type": "expression", "resource": "WhiteEye"},  
-    "Normal": {"type": "expression", "resource": "Normal"},      # 平静 → 无表情（或可改为"冷漠"）
+    "Angry": {"type": "expression", "resource": "angry"},  
+    "Bored": {"type": "expression", "resource": "bored"},    
+    "Confused": {"type": "expression", "resource": "confused"},         
+    "Disgusted": {"type": "expression", "resource": "disgusted"},       # 惊讶
+    "Excited": {"type": "expression", "resource": "excited"},          # 伤心 → 表情
+    "Happy": {"type": "expression", "resource": "happy"}, 
+    "Neutral": {"type": "expression", "resource": "neutral"},  
+    "Pain": {"type": "expression", "resource": "pain"},  
+    "Sad": {"type": "expression", "resource": "sad"},  
+    "Serious": {"type": "expression", "resource": "serious"},  
+    "Shy": {"type": "expression", "resource": "shy"},  
+    "Sleepy": {"type": "expression", "resource": "sleepy"},  
+    "Surprised": {"type": "expression", "resource": "surprised"},  
+    "Teasing": {"type": "expression", "resource": "teasing"},  
+    "Tsundere": {"type": "expression", "resource": "tsundere"},      # 平静 → 无表情（或可改为"冷漠"）
+    "VeryHappy": {"type": "expression", "resource": "very_happy"},  
+
 }
