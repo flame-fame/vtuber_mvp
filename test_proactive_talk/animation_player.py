@@ -91,7 +91,7 @@ class AnimationPlayer:
             self._send_merged_params()
             # 更新频率：50fps
             await asyncio.sleep(0.02)
-        print(f"表情 {expression_name} 播放完成")
+        #print(f"表情 {expression_name} 播放完成")
         
         # 最终设置(如果表情播放完了未被提前终结)
         self.current_expression_name = expression_name

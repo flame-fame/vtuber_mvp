@@ -12,6 +12,7 @@ from danmaku_reader import DanmakuReader, DmType
 from animation_player import AnimationPlayer
 from param_controller import ParamController
 from parameter_mapper import ParameterMapper
+from bubble_generator import BubbleGenerator
 import os
 import random
 
@@ -39,6 +40,7 @@ class AIVTuber:
         self.param_controller = ParamController()
         self.player = AnimationPlayer(self.mapper, self.vts, self.param_controller)
         self.danmaku_reader = DanmakuReader("danmaku_live.txt")
+        self.bubble_generator = BubbleGenerator()
         # 连接 VTS
         if not self.vts.connect():
             print("❌ 无法连接到 VTube Studio，请检查是否开启并配置了API。")
@@ -93,7 +95,7 @@ class AIVTuber:
         print(f"思考耗时: {elapsed_time:.4f} 秒")
         return reply_text, emotion, action
 
-    async def do_danmaku_message(self, danmaku) -> tuple[str, str, str]:
+    async def do_danmaku_message(self, danmaku) -> tuple[str, str, str, str, str]:
         """异步处理单条弹幕"""
         # 生成系统回复消息（不调用AI）
         user_input = ""
@@ -120,11 +122,14 @@ class AIVTuber:
             reply_text = sys_reply_text
             emotion = "neutral"
             action = "think"
+            username = "系统"
         else:
             print("💬 思考中...")
             reply_text, emotion, action = await self.process_ai(user_input)
+            username = danmaku.username
+            user_input = danmaku.content
 
-        return reply_text, emotion, action
+        return reply_text, emotion, action, username, user_input
     
     def should_proactive(self) -> bool:
         """判断是否应该主动发言"""
@@ -145,25 +150,47 @@ class AIVTuber:
         
         return True
     
-    async def do_proactive_message(self) -> tuple[str, str, str]:
+    async def do_proactive_message(self) -> tuple[str, str, str, str, str]:
         """执行主动发言"""
         try:
-            print("\n💭 主动发言中...")
+            #print("\n💭 主动发言中...")
             user_input = random.choice(TOPIC_POOL)
-            print(f"话题：{user_input}")
+            print(f"\n👻 直播间幽灵：{user_input}")
             # 生成主动消息
+            print("💭 思考中...")
             reply_text, emotion, action = await self.brain.chat(user_input)
         except Exception as e:
             print(f"⚠️ 主动发言时出错: {e}")
             return "哎呀，本小姐得好好想想再说！", "neutral", "think"
-            
-        print(f"🤖 AI主动说: {reply_text}")
-        
+    
         # 更新最后主动发言时间
         self.last_proactive_time = time.time()
         self.current_consecutive_proactive += 1
 
-        return reply_text, emotion, action
+        return reply_text, emotion, action, "直播间幽灵", user_input
+
+    async def load_bubble(self, text: str, username: str) -> bool:
+        """加载气泡"""
+        # 3.3 先卸载旧道具（避免卡图），再加载新道具
+        # 注意：这里先卸载后加载，会有一个极短的消失闪动。想要顺滑可以用固定ID直接Load覆盖（实测VTS支持覆盖）
+        try:
+            item_name, output_path = self.bubble_generator.generate_bubble(text, username)
+            
+            self.vts.unload_all_items()
+            # 加载新气泡到屏幕中央偏下位置（根据你的模型调整pos_y）
+            self.vts.load_item(
+                item_name=item_name,
+                file_path=output_path,
+                pos_x=0.3,    # 水平居中
+                pos_y=0.5,  # 大约在胸口位置（负值向下）
+                size=0.4,
+                z_index=99
+            )
+        except Exception as e:
+            print(f"⚠️ 加载气泡时出错: {e}")
+            return False
+        
+        return True
 
     async def run_async(self):
         """异步主循环"""
@@ -205,12 +232,14 @@ class AIVTuber:
                 # 如果没有弹幕，主动发言
                 if danmaku is None:
                     # 执行主动发言
-                    reply_text, emotion, action = await self.do_proactive_message()
+                    reply_text, emotion, action, username, user_input = await self.do_proactive_message()
                 else: # 处理弹幕
                     # 跳过系统消息
                     if danmaku.dtype == DmType.SYSTEM:
                         continue
-                    reply_text, emotion, action = await self.do_danmaku_message(danmaku)
+                    reply_text, emotion, action, username, user_input = await self.do_danmaku_message(danmaku)
+                # 加载弹幕气泡
+                await self.load_bubble(user_input, username)
 
                 print(f"🎭 表情: {emotion}")
                 await self.process_tts(reply_text, emotion)
@@ -218,10 +247,12 @@ class AIVTuber:
         except KeyboardInterrupt:
             print("\n👋 程序被用户中断")
             self.brain.close()
+            self.vts.close()
         except Exception as e:
             print(f"❌ 运行出错: {e}")
             self.brain.close()
-
+            self.vts.close()
+            
 if __name__ == "__main__":
     app = AIVTuber()
     asyncio.run(app.run_async())

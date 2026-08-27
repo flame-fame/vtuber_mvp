@@ -1,3 +1,4 @@
+from PIL.Image import item
 import websocket
 import json
 import time
@@ -8,6 +9,7 @@ from config import *
 # 用于生成唯一的请求ID
 import uuid
 import asyncio
+from pathlib import Path
 
 
 class VTSController:
@@ -30,6 +32,8 @@ class VTSController:
         self.lock = threading.Lock()
         # 可用热键
         self.available_hotkeys=[]
+        # 当前加载的项目ID
+        self.current_itemID = None
 
     def connect(self):
         """建立WebSocket连接"""
@@ -159,9 +163,13 @@ class VTSController:
                     name = hotkey.get("name")
                     self.available_hotkeys.append(name)
                 print(f"✅ VTS - 成功获取{len(self.available_hotkeys)}个热键: {self.available_hotkeys}")
-                   
 
+            elif msg_type == "ItemLoadResponse":
+                itemID = data.get("data", {}).get("instanceID")
+                self.current_itemID = itemID
+                #print(f"✅ VTS - 成功加载项目: {itemID}")
 
+            
             # 处理通用错误响应
             elif msg_type == "APIError":
                 error_data = data.get("data", {})
@@ -356,6 +364,7 @@ class VTSController:
 
     def close(self):
         """关闭与websocket的连接"""
+        self.unload_all_items()
         self.ws.close()
         self.ws = None
         self.response_store.clear()
@@ -367,4 +376,60 @@ class VTSController:
     def get_response(self):
         return self.response_store
 
+    # 在 VTSController 类中添加以下方法
+    def load_item(self, item_name: str, file_path: str, pos_x: float = 0.0, pos_y: float = -0.3, size: float = 1.0, z_index: int = 10):
+        """
+        加载一个道具（气泡）
+        :param item_name: 唯一名称，便于后续卸载
+        :param file_path: 图片绝对路径或相对路径
+        :param pos_x: 屏幕X位置 (-1 左 ~ 1 右)，0为居中
+        :param pos_y: 屏幕Y位置 (-1 下 ~ 1 上)，-0.3 大约在胸部位置
+        :param size: 缩放比例
+        :param z_index: 层级，越高越靠前
+        """
+        if not self.authenticated:
+            print("❌ 未认证，无法加载道具")
+            return
+        
+        # 注意：VTS 要求文件路径必须是绝对路径，且建议使用双反斜杠或正斜杠
+        abs_path = str(Path(file_path).resolve())
+        if not os.path.exists(abs_path):
+            print(f"❌ VTS - 图片文件不存在: {file_path}")
+            return None
 
+        request_id = self._send_request(
+            "ItemLoadRequest",
+            {
+                "fileName": item_name,
+                "path": abs_path,
+                "positionX": pos_x,
+                "positionY": pos_y,
+                "size": size,
+                "zIndex": z_index,
+                "scaleWithModel": True,  # False = 固定在屏幕空间，不随模型大小缩放
+            }
+        )
+        #print(f"✅ 发送加载道具请求: {item_name}")
+
+    def unload_item(self, item_id: str):
+        """卸载道具（清理旧气泡）"""
+        itemID = item_id
+        if not self.authenticated:
+            return
+        if not itemID:
+            print("❌ 未加载道具，无法卸载")
+            return
+        self._send_request(
+            "ItemUnloadRequest",
+            {"instanceIDs": [itemID]}
+        )
+        #print(f"✅ 发送卸载道具请求: {itemID}")
+
+    def unload_all_items(self):
+        """卸载所有道具（清理旧气泡）"""
+        if not self.authenticated:
+            return
+        self._send_request(
+            "ItemUnloadRequest",
+            {"unloadAllInScene": True}
+        )

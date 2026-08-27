@@ -56,12 +56,12 @@ class AIBrain:
                 return "思考太久了，本小姐走神了！", "bored", "think"
             
             ai_text = response['message']['content'].strip()
-            print(f"🤖 AI Text: {ai_text}")
+            
             # 提取情绪标签
             emotion = self._extract_emotion(ai_text)
             # 提取动作标签
             action = self._extract_action(ai_text)
-            print(f"💦 extracted Emotion: {emotion}, Action: {action}")
+            #print(f"💦 extracted Emotion: {emotion}, Action: {action}")
             
             # 移除情绪标签
             clean_text = self.clean_response_text(ai_text)
@@ -70,7 +70,7 @@ class AIBrain:
             self.conversation_history.append({"role": "user", "content": user_input})
             self.conversation_history.append({"role": "assistant", "content": ai_text})
             
-            
+            print(f"🤖 AI 回复: {ai_text}")
             return clean_text, emotion, action
             
         except Exception as e:

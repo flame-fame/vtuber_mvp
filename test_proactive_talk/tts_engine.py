@@ -121,7 +121,7 @@ class TTSEngine:
             start_time = time.time()
             while pygame.mixer.music.get_busy():
                 await asyncio.sleep(0.02)
-            print(f"音频播放耗时: {time.time() - start_time:.2f} 秒")
+            #print(f"音频播放耗时: {time.time() - start_time:.2f} 秒")
         except Exception as e:
             print(f"❌ 播放音频失败: {e}")
         finally:
