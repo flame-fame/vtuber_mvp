@@ -1,6 +1,7 @@
 # bubble_generator.py
 from PIL import Image, ImageDraw, ImageFont
 from vts_controller import VTSController
+from config import ITEM_PATH
 import os
 import time
 import hashlib
@@ -9,7 +10,7 @@ class BubbleGenerator:
     def __init__(self):
         self.font_size = 16
         self.max_width = 600
-        self.base_dir = "D:\\steam\\steamapps\\common\\VTube Studio\\VTube Studio_Data\\StreamingAssets\\Items"
+        self.base_dir = ITEM_PATH
         self.item_name = None
         self.font_type = "simhei.ttf"
         self.output_path = None

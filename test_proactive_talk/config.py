@@ -73,3 +73,5 @@ TTS_CONFIG = {
     "rate": "+5%",
 }
 
+#ITEM_PATH= "D:\\steam\\steamapps\\common\\VTube Studio\\VTube Studio_Data\\StreamingAssets\\Items"
+ITEM_PATH= "D:\\software\\Steam\\steamapps\\common\\VTube Studio\\VTube Studio_Data\\StreamingAssets\\Items"
