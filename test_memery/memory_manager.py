@@ -48,20 +48,36 @@ class MemoryManager:
             return [0.0] * 768  # 兜底
 
     # ---------- 写入 ----------
-    def add_memory(self, content: str, topic: str, speaker: str = "user"):
-        """
-        添加一条记忆
-        :param content: 摘要文本（20字以内）
-        :param topic: 话题标签
-        :param speaker: user / ai
-        """
+    def add_memory(self, content: str, topic: str, speaker: str = "user", keywords: list = None):
         if not content or len(content) < 2:
             return
-        # 简单去重：如果 content 已存在，跳过
+
+        # 不保存相似记忆
+        try:
+            existing = self.collection.query(
+                query_embeddings=[self._embed(content)],
+                n_results=1,
+                include=["distances"]
+            )
+            if existing["distances"] and existing["distances"][0]:
+                similarity = 1 - existing["distances"][0][0]
+                if similarity > 0.95:  # 高度相似，视为重复
+                    print(f"⏭️ 跳过重复记忆 (相似度 {similarity:.3f})")
+                    return
+        except Exception:
+            pass
+
+        # 把 keywords 拼进 content，强化检索
+        keywords = keywords or []
+        if keywords:
+            kw_str = "/".join(keywords[:5])
+            content = f"{content}（{kw_str}）"
+        
+        # 去重检查用原始 content 前缀
         existing = self.collection.get(where={"content": content})
         if existing and existing["ids"]:
             return
-
+        
         mem_id = f"mem_{int(time.time() * 1000)}_{random.randint(0, 999)}"
         try:
             self.collection.add(
@@ -72,25 +88,30 @@ class MemoryManager:
                     "topic": topic,
                     "speaker": speaker,
                     "timestamp": time.time(),
-                    "date_str": datetime.now().strftime("%Y-%m-%d %H:%M")
+                    "date_str": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "keywords": ",".join(keywords or [])  # 单独存一份便于过滤
                 }]
             )
             print(f"💾 记忆已写入: [{topic}] {content}")
         except Exception as e:
             print(f"⚠️ 写入记忆失败: {e}")
 
-    async def add_memory_async(self, content: str, topic: str, speaker: str = "user"):
-        """异步写入（不阻塞主流程）"""
-        await asyncio.to_thread(self.add_memory, content, topic, speaker)
+    async def add_memory_async(self, content: str, topic: str, speaker: str = "user", keywords: list = None):
+        await asyncio.to_thread(self.add_memory, content, topic, speaker, keywords)
 
     # ---------- 检索 ----------
     def search(self, query: str, top_k: int = None) -> List[Dict]:
         """
         检索相关记忆，返回格式化列表
         """
+        # 空 query 直接返回
+        if not query or not query.strip():
+            return []
+        
         top_k = top_k or self.top_k
         if self.collection.count() == 0:
             return []
+        
         try:
             results = self.collection.query(
                 query_embeddings=[self._embed(query)],
