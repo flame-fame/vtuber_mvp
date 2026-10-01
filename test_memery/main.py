@@ -27,12 +27,7 @@ class AIVTuber:
         self.max_consecutive_proactive = 10  # 连续主动发言最大次数
         self.current_consecutive_proactive = 0
         # 初始化AI组件
-        self.brain = AIBrain(
-            model_name=AI_CONFIG["model_name"],
-            system_prompt=AI_CONFIG["system_prompt"],
-            temperature=AI_CONFIG["temperature"],
-            max_tokens=AI_CONFIG["max_tokens"]
-        )
+        self.brain = AIBrain()
         # 初始化其他组件
         self.vts = VTSController()
         self.mapper = ParameterMapper("live2d_param_mapping.json", "face_param_mapping.json")

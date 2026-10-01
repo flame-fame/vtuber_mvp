@@ -7,23 +7,58 @@ from datetime import datetime
 from typing import Tuple, Dict
 from config import *
 from memory_manager import MemoryManager
-from memory_extractor import MemoryExtractor
+from persona import PersonaLoader
+from strategy_router import StrategyRouter
+
 
 class AIBrain:
     """AI 对话核心"""
     
-    def __init__(self, model_name: str , system_prompt: str, temperature: float, max_tokens: int):
-        self.model = model_name
-        self.system_prompt = system_prompt
-        self.temperature = temperature
-        self.max_tokens = max_tokens
+    def __init__(self):
+        # 1. 加载人格
+        self.persona = PersonaLoader(PERSONA_CONFIG['path'])
+        self.system_prompt = self.persona.build_system_prompt()
+
+        # 2. 模型参数
+        self.model = AI_CONFIG["model_name"]
+        self.temperature = AI_CONFIG["temperature"]
+        self.max_tokens = AI_CONFIG["max_tokens"]
+
+        # 3. 历史与状态
         self.conversation_history = []
-        self.max_history = AI_CONFIG["max_history"]  
-        self.emotions_list = ["neutral", "happy", "very_happy", "sad", "angry", "surprised", "shy", "serious", "teasing", "bored", "confused", "disgusted", "excited", "pain", "sleepy", "tsundere"]
-        self.actions_list = ["nod", "shake_head", "tilt_head", "shrug", "laugh", "cry", "think", "body_bounce", "body_sway", "hip_sway", "spin_jump", "cheer_jump", "head_bob"]
+        self.max_history = AI_CONFIG["max_history"]
+        self.emotions_list = [
+            "neutral", "happy", "very_happy", "sad", "angry", "surprised",
+            "shy", "serious", "teasing", "bored", "confused", "disgusted",
+            "excited", "pain", "sleepy", "tsundere"
+        ]
+        self.actions_list = [
+            "nod", "shake_head", "tilt_head", "shrug", "laugh", "cry", "think",
+            "body_bounce", "body_sway", "hip_sway", "spin_jump", "cheer_jump", "head_bob"
+        ]
         self.last_interaction_time = time.time()
+
+        # 4. 记忆库 + 预注入信念
         self.memory = MemoryManager()
-        self.extractor = MemoryExtractor()
+        self._preload_beliefs()
+
+        # 5. 策略路由
+        self.router = StrategyRouter(self, persona=self.persona)
+
+        print(f"🎭 人格已加载：{self.persona.get_meta().get('name')}")
+        print(f"🧭 策略权重：{self.router.weights}")
+
+    def _preload_beliefs(self):
+        """启动时把人设信念注入记忆库（仅一次，去重由 add_memory 处理）"""
+        beliefs = self.persona.get_beliefs()
+        for b in beliefs:
+            self.memory.add_memory(
+                content=b["statement"],
+                topic=b["category"],
+                speaker="self",
+                keywords=b.get("keywords", [])
+            )
+        print(f"📖 已预注入 {len(beliefs)} 条人格信念")
 
     async def chat(self, user_input: str) -> Tuple[str, str, float]: 
         """
@@ -32,19 +67,17 @@ class AIBrain:
             (ai_response, emotion, action): AI回复文本和情绪标签、动作标签
         """
         try:
-            # ===== 检索记忆 =====
-            memories = self.memory.search(user_input)
-            memory_context = self.memory.format_for_prompt(memories)
-            if memory_context:
-                print(f"🔍 检索到 {len(memories)} 条记忆")
-                enriched_input = f"{memory_context}\n\n【当前用户说】{user_input}"
-            else:
-                enriched_input = user_input
+            # 1. 策略路由选一个策略
+            strategy = self.router.pick(user_input)
+            print(f"🎯 策略: {strategy.name}")
 
-            # 构建消息列表
+            # 2. 策略生成增强 prompt
+            enhanced_input = strategy.build_prompt(user_input)
+
+            # 3. 构建消息
             messages = [{"role": "system", "content": self.system_prompt}]
             messages.extend(self.conversation_history[-self.max_history:])
-            messages.append({"role": "user", "content": enriched_input})
+            messages.append({"role": "user", "content": enhanced_input})
             
             # 调用模型
             try:
@@ -78,10 +111,8 @@ class AIBrain:
             # 更新历史
             self.conversation_history.append({"role": "user", "content": user_input})
             self.conversation_history.append({"role": "assistant", "content": ai_text})
-            
-            # ===== 异步提取并写入记忆 =====
-            asyncio.create_task(self._save_memory(user_input, ai_text))
-
+            self.last_interaction_time = time.time()
+    
             print(f"🤖 AI 回复: {ai_text}")
             return clean_text, emotion, action
             
@@ -90,19 +121,8 @@ class AIBrain:
             print(f"❌ AI 接口报错: {e}")
             return "哼，本小姐现在不想说话！", "neutral", "think"
 
-    async def _save_memory(self, user_input: str, ai_reply: str):
-        """异步提取摘要并写入记忆库"""
-        try:
-            extracted = await self.extractor.extract_async(user_input, ai_reply)
-            if extracted["content"]:
-                await self.memory.add_memory_async(
-                    extracted["content"],
-                    extracted["topic"] or "闲聊",
-                    speaker="user"
-                )
-        except Exception as e:
-            print(f"⚠️ 记忆写入失败: {e}")
 
+    # ---------- 文本清理 ----------
     def clean_response_text(self, ai_text: str) -> str:
         """清理响应文本，移除情绪标签和动作标签"""
         # 1. 先统一将全角括号转为半角
@@ -158,7 +178,7 @@ class AIBrain:
             return float(match.group(2))
         return 0.5  # 默认强度值
     
-    
+    # ---------- 关闭 ----------
     def close(self):
         """关闭时调用"""
         self.clear_history()

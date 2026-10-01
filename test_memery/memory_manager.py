@@ -100,7 +100,7 @@ class MemoryManager:
         await asyncio.to_thread(self.add_memory, content, topic, speaker, keywords)
 
     # ---------- 检索 ----------
-    def search(self, query: str, top_k: int = None) -> List[Dict]:
+    def search(self, query: str, top_k: int = None, prefer_self: bool = False) -> List[Dict]:
         """
         检索相关记忆，返回格式化列表
         """
@@ -111,11 +111,13 @@ class MemoryManager:
         top_k = top_k or self.top_k
         if self.collection.count() == 0:
             return []
-        
+
+        # 如果 prefer_self，多取一些然后重排
+        fetch_k = min(top_k * 3, self.collection.count()) if prefer_self else min(top_k, self.collection.count())
         try:
             results = self.collection.query(
                 query_embeddings=[self._embed(query)],
-                n_results=min(top_k, self.collection.count()),
+                n_results=fetch_k,
                 include=["documents", "metadatas", "distances"]
             )
         except Exception as e:
@@ -138,15 +140,26 @@ class MemoryManager:
             age_days = (time.time() - meta.get("timestamp", 0)) / 86400
             if age_days > 30:
                 continue
-            memories.append({
+            mem = {
                 "content": doc,
                 "topic": meta.get("topic", ""),
                 "speaker": meta.get("speaker", ""),
                 "date_str": meta.get("date_str", ""),
                 "similarity": round(similarity, 3),
-                "age_days": round(age_days, 1)
-            })
+                "age_days": round(age_days, 1),
+                "is_self": meta.get("speaker") == "self"
+            }
+            # 自身信念加权
+            if prefer_self and mem["is_self"]:
+                mem["similarity"] = round(mem["similarity"] + 0.15, 3)
+            memories.append(mem)
+
+        # 重排 + 截断
+        if prefer_self:
+            memories.sort(key=lambda x: -x["similarity"])
+        memories = memories[:top_k]
         return memories
+        
 
     def format_for_prompt(self, memories: List[Dict]) -> str:
         """把检索结果格式化成可以塞进 prompt 的文本"""

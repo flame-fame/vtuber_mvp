@@ -84,3 +84,8 @@ MEMORY_CONFIG = {
     "similarity_threshold": 0.35,      # bge 的相似度分布不同，阈值调高
     "max_count": 5000,
 }
+
+# ==================== 人格配置 ====================
+PERSONA_CONFIG = {
+    "path": "persona/persona.yaml",
+}
