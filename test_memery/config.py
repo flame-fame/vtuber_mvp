@@ -85,7 +85,7 @@ MEMORY_CONFIG = {
     "max_count": 5000,
 }
 
-# ==================== 人格配置 ====================
+# 人格配置 
 PERSONA_CONFIG = {
     "path": "persona/persona.yaml",
 }

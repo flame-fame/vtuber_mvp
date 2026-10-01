@@ -25,8 +25,8 @@ class AIBrain:
         self.max_tokens = AI_CONFIG["max_tokens"]
 
         # 3. 历史与状态
-        self.conversation_history = []
-        self.max_history = AI_CONFIG["max_history"]
+        # self.conversation_history = []
+        # self.max_history = AI_CONFIG["max_history"]
         self.emotions_list = [
             "neutral", "happy", "very_happy", "sad", "angry", "surprised",
             "shy", "serious", "teasing", "bored", "confused", "disgusted",
@@ -76,7 +76,7 @@ class AIBrain:
 
             # 3. 构建消息
             messages = [{"role": "system", "content": self.system_prompt}]
-            messages.extend(self.conversation_history[-self.max_history:])
+            # messages.extend(self.conversation_history[-self.max_history:])
             messages.append({"role": "user", "content": enhanced_input})
             
             # 调用模型
@@ -109,8 +109,8 @@ class AIBrain:
             clean_text = self.clean_response_text(ai_text)
             
             # 更新历史
-            self.conversation_history.append({"role": "user", "content": user_input})
-            self.conversation_history.append({"role": "assistant", "content": ai_text})
+            # self.conversation_history.append({"role": "user", "content": user_input})
+            # self.conversation_history.append({"role": "assistant", "content": ai_text})
             self.last_interaction_time = time.time()
     
             print(f"🤖 AI 回复: {ai_text}")

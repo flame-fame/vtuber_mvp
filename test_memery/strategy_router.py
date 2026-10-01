@@ -67,7 +67,7 @@ class StrategyRouter:
         # 3. 按权重随机
         names = list(available.keys())
         weights = list(available.values())
-        chosen_name = random.choices(names, weights=weights, k=1)[0]
+        chosen_name = random.choices(names, weights=weights, k=1)[0]  # 按weights权重随机抽取1个
         chosen = self.strategies[chosen_name]
 
         # 4. 记录历史
